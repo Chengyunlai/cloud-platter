@@ -1,0 +1,31 @@
+name: 功能建议
+description: 提议一个符合项目边界的改进
+title: "[Feature] "
+labels: ["enhancement", "待评估"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: 使用场景
+      description: 你遇到了什么问题？谁会从这个改进中受益？
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 期望结果
+      description: 描述用户可以观察和验证的结果，不必指定实现方式。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 备选方案
+      description: 你已经尝试或考虑过哪些替代方式？
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: 项目边界
+      options:
+        - label: 该建议不要求抓取账号 Cookie、模拟登录或注入其他进程。
+          required: true

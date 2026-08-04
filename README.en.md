@@ -2,6 +2,8 @@
 
 [中文](README.md)
 
+[![CI](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml/badge.svg)](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml)
+
 CloudPlatter is an open-source desktop turntable that gives the music already playing on your Mac a lightweight, immersive visual presence.
 
 The first release targets the NetEase Cloud Music macOS client. It reads local Now Playing information and presents the current track as a desktop vinyl scene. CloudPlatter does not replace the player, require a separate music-account login, or upload listening history.
@@ -30,6 +32,15 @@ CloudPlatter relies on undocumented macOS media interfaces for cross-application
 ## Development and contributing
 
 Chinese is the project's default documentation language, with English maintained as a synchronized translation. Code identifiers are written in English, while code comments are written in Chinese. See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete conventions.
+
+```bash
+make check
+make package VERSION=0.1.0-dev
+```
+
+- [Project roadmap (Chinese)](docs/ROADMAP.md)
+- [Domain context (Chinese)](CONTEXT.md)
+- [Architecture decisions (Chinese)](docs/adr/README.md)
 
 ## Project independence
 

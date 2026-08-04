@@ -1,0 +1,45 @@
+name: 缺陷报告
+description: 报告可复现的 CloudPlatter 问题
+title: "[Bug] "
+labels: ["bug", "待评估"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请不要提交账号、完整播放历史或其他敏感信息。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 实际发生了什么？你期望发生什么？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 启动 CloudPlatter
+        2. 在网易云音乐播放……
+        3. 观察到……
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS 版本
+      placeholder: 例如 15.6
+    validations:
+      required: true
+  - type: input
+    id: netease
+    attributes:
+      label: 网易云音乐版本
+      placeholder: 例如 3.1.9 (3364)
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 其他信息
+      description: 可提供脱敏日志、截图或录屏，请先移除个人信息。

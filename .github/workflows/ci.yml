@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: 构建与测试
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 显示 Swift 版本
+        run: swift --version
+
+      - name: 检查格式
+        run: make lint
+
+      - name: 构建与测试
+        run: make build test
+
+      - name: 验证可发布包
+        run: make package VERSION=0.0.0-ci
+
+      - name: 上传测试包
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloudPlatter-ci-universal
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+          retention-days: 7

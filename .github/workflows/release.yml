@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 构建并发布
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 验证版本标签
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+              echo "Release 标签必须使用 v0.1.0 形式。" >&2
+              exit 1
+          fi
+
+      - name: 运行完整检查
+        run: make check
+
+      - name: 构建发布包
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: make package VERSION="${RELEASE_VERSION#v}"
+
+      - name: 创建 GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+              dist/*.zip \
+              dist/*.sha256 \
+              --verify-tag \
+              --generate-notes \
+              --title "CloudPlatter $GITHUB_REF_NAME" \
+              --notes "此版本使用 ad-hoc 签名，首次打开可能需要在 macOS 隐私与安全性设置中手动允许。"

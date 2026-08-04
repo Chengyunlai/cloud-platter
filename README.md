@@ -2,6 +2,8 @@
 
 [English](README.en.md)
 
+[![CI](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml/badge.svg)](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml)
+
 CloudPlatter 是一个开源的 macOS 桌面黑胶唱机，为 Mac 上正在播放的音乐提供轻量、沉浸的可视化体验。
 
 项目首期面向网易云音乐 macOS 客户端：读取本机 Now Playing 信息，把当前歌曲呈现为桌面黑胶场景。CloudPlatter 不替代播放器、不要求登录音乐账号，也不上传用户的收听记录。
@@ -30,6 +32,15 @@ CloudPlatter 需要使用未公开的 macOS 媒体接口读取其他应用的 No
 ## 开发与贡献
 
 项目以中文作为默认文档语言，英文文档作为同步翻译。代码标识符使用英文，代码注释使用中文。完整规范请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+```bash
+make check
+make package VERSION=0.1.0-dev
+```
+
+- [项目路线图](docs/ROADMAP.md)
+- [领域上下文](CONTEXT.md)
+- [架构决策](docs/adr/README.md)
 
 ## 独立项目声明
 
