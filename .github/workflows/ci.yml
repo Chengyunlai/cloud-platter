@@ -22,15 +22,14 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: 显示 Swift 版本
         run: swift --version
 
-      - name: 检查格式
-        run: make lint
-
-      - name: 构建与测试
-        run: make build test
+      - name: 运行完整检查
+        run: make check
 
       - name: 验证可发布包
         run: make package VERSION=0.0.0-ci

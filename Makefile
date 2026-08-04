@@ -9,10 +9,10 @@ test:
 	swift test
 
 lint:
-	xcrun swift-format lint --strict --recursive Sources Tests Package.swift
+	xcrun swift-format lint --strict --configuration .swift-format --recursive Sources Tests Package.swift
 
 format:
-	xcrun swift-format format --in-place --recursive Sources Tests Package.swift
+	xcrun swift-format format --in-place --configuration .swift-format --recursive Sources Tests Package.swift
 
 check: lint build test
 

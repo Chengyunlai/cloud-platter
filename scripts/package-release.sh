@@ -8,11 +8,17 @@ app_name="CloudPlatter"
 dist_dir="$project_root/dist"
 app_dir="$dist_dir/$app_name.app"
 contents_dir="$app_dir/Contents"
+core_number='(0|[1-9][0-9]*)'
+prerelease_identifier='(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)'
+build_identifier='[0-9A-Za-z-]+'
+semver_pattern="^${core_number}\.${core_number}\.${core_number}(-${prerelease_identifier}(\.${prerelease_identifier})*)?(\+${build_identifier}(\.${build_identifier})*)?$"
 
-if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-    echo "版本号必须符合语义化版本格式，例如 0.1.0 或 0.1.0-beta.1。" >&2
+if [[ ! "$version" =~ $semver_pattern ]]; then
+    echo "版本号必须符合 SemVer 2.0，例如 0.1.0、0.1.0-beta.1 或 0.1.0+build.1。" >&2
     exit 1
 fi
+
+bundle_short_version="${version%%[-+]*}"
 
 rm -rf "$dist_dir"
 mkdir -p "$contents_dir/MacOS" "$contents_dir/Resources"
@@ -30,13 +36,19 @@ lipo -create \
     -output "$contents_dir/MacOS/$app_name"
 
 cp "$project_root/Config/Info.plist" "$contents_dir/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" "$contents_dir/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $bundle_short_version" "$contents_dir/Info.plist"
 
 # 开源构建使用 ad-hoc 签名；Release 页面必须保留 Gatekeeper 提示。
 codesign --force --deep --sign - "$app_dir"
 
-archive_path="$dist_dir/$app_name-$version-universal.zip"
+archive_name="$app_name-$version-universal.zip"
+archive_path="$dist_dir/$archive_name"
 ditto -c -k --sequesterRsrc --keepParent "$app_dir" "$archive_path"
-shasum -a 256 "$archive_path" > "$archive_path.sha256"
+
+# 校验文件只记录文件名，下载到任意目录后都可以直接验证。
+(
+    cd "$dist_dir"
+    shasum -a 256 "$archive_name" > "$archive_name.sha256"
+)
 
 echo "已生成：$archive_path"

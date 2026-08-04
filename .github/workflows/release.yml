@@ -11,19 +11,22 @@ permissions:
 jobs:
   release:
     name: 构建并发布
+    if: github.actor == github.repository_owner
     runs-on: macos-15
     timeout-minutes: 20
 
     steps:
       - name: 检出代码
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: 验证版本标签
-        env:
-          RELEASE_VERSION: ${{ github.ref_name }}
+      - name: 验证发布来源
         run: |
-          if [[ ! "$RELEASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
-              echo "Release 标签必须使用 v0.1.0 形式。" >&2
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "Release 标签必须指向 main 分支历史中的提交。" >&2
               exit 1
           fi
 
@@ -43,6 +46,5 @@ jobs:
               dist/*.zip \
               dist/*.sha256 \
               --verify-tag \
-              --generate-notes \
               --title "CloudPlatter $GITHUB_REF_NAME" \
-              --notes "此版本使用 ad-hoc 签名，首次打开可能需要在 macOS 隐私与安全性设置中手动允许。"
+              --notes-file Config/RELEASE_NOTES.md

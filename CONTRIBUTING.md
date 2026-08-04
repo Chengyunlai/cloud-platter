@@ -81,6 +81,7 @@ guard let nowPlayingInfo else {
 ## 7. 发布规范
 
 - 发布包通过 GitHub Releases 提供，并附版本说明和 SHA-256 校验值。
+- 发布标签必须由仓库维护者创建，并指向 `main` 分支历史中的提交。
 - 未签名或未公证的构建必须在下载页明确提示 Gatekeeper 行为和官方的手动允许步骤。
 - 不要求用户全局关闭 Gatekeeper，也不把关闭系统安全机制作为标准安装方法。
 - 每次发布记录已验证的 macOS 和网易云音乐版本，以及已知的 MediaRemote 兼容问题。
