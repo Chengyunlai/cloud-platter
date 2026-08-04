@@ -2,6 +2,20 @@
 
 感谢参与 CloudPlatter。本规范适用于代码、文档、测试、提交和发布流程。
 
+## 参与方式
+
+- 首个稳定版本发布前，仅接受维护者邀请的 contributor 提交 Pull Request。
+- 未受邀贡献者可以创建 Issue 报告问题或提出建议；请不要直接提交实现 PR。
+- 受邀 contributor 在开始编码前应先认领对应 Issue，并确认验收标准和阻塞项。
+- 公共仓库无法阻止用户创建 PR，维护者会关闭未经协商的提交，但欢迎把背景和建议保留在 Issue 中继续讨论。
+
+## 开发环境
+
+- macOS 14 或更新版本。
+- 完整 Xcode 及其包含的 Swift 工具链；只有 Command Line Tools 时可以构建应用，但可能缺少 Swift Testing 运行库。
+- 首次克隆后运行 `make check` 验证格式、构建和测试。
+- 运行 `make package VERSION=0.1.0-dev` 可在 `dist/` 生成 ad-hoc 签名的 Universal 应用 ZIP 和 SHA-256。
+
 ## 1. 语言规范
 
 - `README.md` 是默认入口，必须使用中文。

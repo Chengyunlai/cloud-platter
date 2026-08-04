@@ -41,6 +41,7 @@ make package VERSION=0.1.0-dev
 - [项目路线图](docs/ROADMAP.md)
 - [领域上下文](CONTEXT.md)
 - [架构决策](docs/adr/README.md)
+- [安全政策](SECURITY.md)
 
 ## 独立项目声明
 

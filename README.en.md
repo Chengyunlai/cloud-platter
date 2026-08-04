@@ -41,6 +41,7 @@ make package VERSION=0.1.0-dev
 - [Project roadmap (Chinese)](docs/ROADMAP.md)
 - [Domain context (Chinese)](CONTEXT.md)
 - [Architecture decisions (Chinese)](docs/adr/README.md)
+- [Security policy (Chinese)](SECURITY.md)
 
 ## Project independence
 

@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: 显示 Swift 版本
         run: swift --version
@@ -36,7 +36,7 @@ jobs:
         run: make package VERSION=0.0.0-ci
 
       - name: 上传测试包
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: CloudPlatter-ci-universal
           path: |
