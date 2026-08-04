@@ -4,9 +4,9 @@
 
 [![CI](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml/badge.svg)](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml)
 
-CloudPlatter 是一个开源的 macOS 桌面黑胶唱机，为 Mac 上正在播放的音乐提供轻量、沉浸的可视化体验。
+当你在 Mac 上播放网易云音乐时，CloudPlatter 会在桌面呈现一台随音乐转动的黑胶唱机，让当前歌曲拥有轻量、沉浸的视觉陪伴。
 
-项目首期面向网易云音乐 macOS 客户端：读取本机 Now Playing 信息，把当前歌曲呈现为桌面黑胶场景。CloudPlatter 不替代播放器、不要求登录音乐账号，也不上传用户的收听记录。
+你可以继续使用熟悉的网易云音乐客户端：CloudPlatter 只读取本机 Now Playing 信息，不替代播放器、不要求再次登录音乐账号，也不上传你的收听记录。
 
 ## 项目状态
 

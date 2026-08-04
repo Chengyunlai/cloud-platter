@@ -4,9 +4,9 @@
 
 [![CI](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml/badge.svg)](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml)
 
-CloudPlatter is an open-source desktop turntable that gives the music already playing on your Mac a lightweight, immersive visual presence.
+When you play music in NetEase Cloud Music on your Mac, CloudPlatter places a turntable on your desktop that moves with the music and gives the current track a lightweight, immersive visual presence.
 
-The first release targets the NetEase Cloud Music macOS client. It reads local Now Playing information and presents the current track as a desktop vinyl scene. CloudPlatter does not replace the player, require a separate music-account login, or upload listening history.
+You can keep using the player you already know. CloudPlatter only reads local Now Playing information; it does not replace the player, require another music-account login, or upload your listening history.
 
 ## Status
 
