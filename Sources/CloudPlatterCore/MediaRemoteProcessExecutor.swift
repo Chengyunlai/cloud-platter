@@ -7,9 +7,16 @@ enum MediaRemoteProcessError: Error, Equatable, Sendable {
     case invalidOutput
 }
 
+/// 隔离系统进程调用，使能力测试与实时行流共享一致的超时、取消和失败边界。
+///
+/// 实现不得输出 stderr 或原始媒体内容；一次性调用超时后必须终止进程，实时调用在首行超时、
+/// 非零退出或调用方取消时必须结束序列并释放子进程。
 protocol MediaRemoteProcessExecuting: Sendable {
+    /// 执行一次性命令，并把启动失败、超时和退出码转换为脱敏结果。
     func run(arguments: [String], timeout: Duration) async
         -> Result<Int32, MediaRemoteProcessError>
+
+    /// 启动实时命令并逐行输出 stdout；在指定时间内没有完整首行时抛出超时错误。
     func lines(arguments: [String], initialOutputTimeout: Duration)
         -> AsyncThrowingStream<Data, any Error>
 }

@@ -51,7 +51,7 @@ public struct MediaRemoteObservationSource: Sendable {
         }
 
         let result = await executor.run(
-            arguments: adapterArguments(command: "test"),
+            arguments: adapterArguments(command: .test),
             timeout: .seconds(15)
         )
 
@@ -95,7 +95,7 @@ public struct MediaRemoteObservationSource: Sendable {
                     do {
                         for try await line in executor.lines(
                             arguments: adapterArguments(
-                                command: "stream", options: ["--debounce=100"]),
+                                command: .stream, options: ["--debounce=100"]),
                             initialOutputTimeout: initialOutputTimeout
                         ) {
                             guard !Task.isCancelled else {
@@ -152,13 +152,18 @@ public struct MediaRemoteObservationSource: Sendable {
         return nil
     }
 
-    private func adapterArguments(command: String, options: [String] = []) -> [String] {
+    private func adapterArguments(command: AdapterCommand, options: [String] = []) -> [String] {
         [
             paths.perlExecutable.path,
             paths.script.path,
             paths.framework.path,
             paths.testClient.path,
-            command,
+            command.rawValue,
         ] + options
     }
+}
+
+private enum AdapterCommand: String {
+    case test
+    case stream
 }

@@ -64,14 +64,51 @@ private struct SettingsView: View {
     let nowPlayingState: NowPlayingState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("CloudPlatter", systemImage: "record.circle")
-                .font(.title2)
-            Text("技术验证阶段")
-                .foregroundStyle(.secondary)
-            Text(nowPlayingState.title ?? "播放一首网易云音乐歌曲后，这里将显示当前曲目。")
+        HStack(alignment: .top, spacing: 18) {
+            artwork
+
+            VStack(alignment: .leading, spacing: 12) {
+                Label("CloudPlatter", systemImage: "record.circle")
+                    .font(.title2)
+                Text("技术验证阶段")
+                    .foregroundStyle(.secondary)
+                Text(statusText)
+            }
         }
         .padding(24)
         .frame(width: 420, height: 180, alignment: .topLeading)
+    }
+
+    @ViewBuilder
+    private var artwork: some View {
+        Group {
+            if let artworkData = nowPlayingState.artwork,
+                let image = NSImage(data: artworkData)
+            {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .accessibilityLabel("当前专辑封面")
+            } else {
+                Image(systemName: "record.circle.fill")
+                    .resizable()
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("默认唱片")
+            }
+        }
+        .frame(width: 88, height: 88)
+        .clipShape(Circle())
+    }
+
+    private var statusText: String {
+        switch nowPlayingState.status {
+        case .unavailable:
+            "当前系统暂不兼容，已使用默认唱片。"
+        case .idle:
+            "播放一首网易云音乐歌曲后，这里将显示当前曲目。"
+        case .playing, .paused:
+            nowPlayingState.title ?? "当前曲目"
+        }
     }
 }

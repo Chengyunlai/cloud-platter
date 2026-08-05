@@ -8,6 +8,9 @@ CloudPlatter 随安装包分发以下第三方组件。除项目自身许可证�
 - 固定提交：`3ac3d4bdf862c7b5399b4fba4df5689f5c38609a`
 - 许可证：BSD 3-Clause
 
+CloudPlatter 通过 GitHub Releases 直接分发，不通过 Mac App Store。该组件由 Apple 系统
+`/usr/bin/perl` 子进程加载并调用未公开的 MediaRemote；未来 macOS 更新可能使其失效。
+
 ```text
 BSD 3-Clause License
 

@@ -23,6 +23,52 @@ struct MediaRemoteObservationSourceTests {
         #expect(capability == .unavailable(.capabilityTestFailed(exitCode: 23)))
     }
 
+    @Test("能力测试超时与启动失败会被脱敏分类")
+    func capabilityProcessFailuresAreClassified() async {
+        let timedOutSource = MediaRemoteObservationSource(
+            paths: .testFixture,
+            executor: StubMediaRemoteProcessExecutor(
+                capabilityResult: .failure(.timedOut),
+                streamLines: []
+            ),
+            restartDelays: []
+        )
+        let launchFailedSource = MediaRemoteObservationSource(
+            paths: .testFixture,
+            executor: StubMediaRemoteProcessExecutor(
+                capabilityResult: .failure(.launchFailed),
+                streamLines: []
+            ),
+            restartDelays: []
+        )
+
+        #expect(await timedOutSource.checkCapability() == .unavailable(.capabilityTestTimedOut))
+        #expect(await launchFailedSource.checkCapability() == .unavailable(.launchFailed))
+    }
+
+    @Test("Perl 或 helper 资源缺失时不会尝试启动")
+    func missingRuntimeResourcesAreReported() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamLines: []
+        )
+        let missingPerlSource = MediaRemoteObservationSource(
+            paths: .testFixtureWithMissingPerl,
+            executor: executor,
+            restartDelays: []
+        )
+        let missingFrameworkSource = MediaRemoteObservationSource(
+            paths: .testFixtureWithMissingFramework,
+            executor: executor,
+            restartDelays: []
+        )
+
+        #expect(await missingPerlSource.checkCapability() == .unavailable(.missingPerl))
+        #expect(
+            await missingFrameworkSource.checkCapability()
+                == .unavailable(.missingResource("Missing.framework")))
+    }
+
     @Test("事件流通过公开状态序列输出规范化结果")
     func streamProducesNormalizedStates() async throws {
         let executor = StubMediaRemoteProcessExecutor(
@@ -223,6 +269,22 @@ extension MediaRemoteAdapterPaths {
         supervisor: URL(fileURLWithPath: "/usr/bin/true"),
         script: URL(fileURLWithPath: "/usr/bin/true"),
         framework: URL(fileURLWithPath: "/System/Library/Frameworks/Foundation.framework"),
+        testClient: URL(fileURLWithPath: "/usr/bin/true")
+    )
+
+    fileprivate static let testFixtureWithMissingPerl = MediaRemoteAdapterPaths(
+        perlExecutable: URL(fileURLWithPath: "/不存在/perl"),
+        supervisor: URL(fileURLWithPath: "/usr/bin/true"),
+        script: URL(fileURLWithPath: "/usr/bin/true"),
+        framework: URL(fileURLWithPath: "/System/Library/Frameworks/Foundation.framework"),
+        testClient: URL(fileURLWithPath: "/usr/bin/true")
+    )
+
+    fileprivate static let testFixtureWithMissingFramework = MediaRemoteAdapterPaths(
+        perlExecutable: URL(fileURLWithPath: "/usr/bin/true"),
+        supervisor: URL(fileURLWithPath: "/usr/bin/true"),
+        script: URL(fileURLWithPath: "/usr/bin/true"),
+        framework: URL(fileURLWithPath: "/不存在/Missing.framework"),
         testClient: URL(fileURLWithPath: "/usr/bin/true")
     )
 }
