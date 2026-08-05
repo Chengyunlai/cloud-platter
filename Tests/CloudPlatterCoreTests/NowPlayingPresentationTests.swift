@@ -1,4 +1,5 @@
 import CloudPlatterCore
+import Combine
 import Foundation
 import Testing
 
@@ -7,7 +8,8 @@ import Testing
 @Suite("正在播放界面展示")
 struct NowPlayingPresentationTests {
     @Test("录制事件驱动菜单栏的播放、暂停和切歌展示")
-    func recordedFixtureDrivesPrimaryDisplayStates() throws {
+    @MainActor
+    func recordedFixtureDrivesPrimaryDisplayStates() async throws {
         let fixtureURL = try #require(
             Bundle.module.url(
                 forResource: "netease-stream",
@@ -16,16 +18,29 @@ struct NowPlayingPresentationTests {
             )
         )
         let fixture = try String(contentsOf: fixtureURL, encoding: .utf8)
+        let (states, continuation) = AsyncStream.makeStream(of: NowPlayingState.self)
+        let playbackModel = PlaybackModel(
+            source: RecordedPlaybackObservationSource(recordedStates: states)
+        )
+        var observedStates = playbackModel.$nowPlayingState.values.makeAsyncIterator()
         var decoder = MediaRemoteStreamDecoder()
         var presentations: [NowPlayingPresentation] = []
 
+        _ = await observedStates.next()
         for line in fixture.split(whereSeparator: \.isNewline) {
             let state = try decoder.decode(line: Data(line.utf8))
-            presentations.append(NowPlayingPresentation(state: state))
+            continuation.yield(state)
+            let observedState = try #require(await observedStates.next())
+            presentations.append(NowPlayingPresentation(state: observedState))
         }
+        continuation.finish()
 
         #expect(presentations.map(\.statusText) == ["正在播放", "已暂停", "正在播放"])
         #expect(presentations.map(\.menuBarTitle) == ["匿名歌曲一", "匿名歌曲一", "匿名歌曲二"])
+        #expect(
+            presentations.map(\.symbolName)
+                == ["play.circle.fill", "pause.circle.fill", "play.circle.fill"]
+        )
         #expect(presentations.first?.artistText == "匿名艺人")
         #expect(presentations.first?.albumText == "匿名专辑")
     }
@@ -55,5 +70,13 @@ struct NowPlayingPresentationTests {
         #expect(presentation.titleText == "匿名歌曲")
         #expect(presentation.artistText == "未知艺人")
         #expect(presentation.albumText == "未知专辑")
+    }
+}
+
+private struct RecordedPlaybackObservationSource: PlaybackObservationSource {
+    let recordedStates: AsyncStream<NowPlayingState>
+
+    func states() -> AsyncStream<NowPlayingState> {
+        recordedStates
     }
 }

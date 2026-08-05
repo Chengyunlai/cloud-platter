@@ -6,21 +6,23 @@ struct NowPlayingStatusBadge: View {
     var body: some View {
         Label(presentation.statusText, systemImage: presentation.symbolName)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(tint)
+            .foregroundStyle(presentation.statusTone.color)
             .padding(.horizontal, 9)
             .padding(.vertical, 5)
-            .background(tint.opacity(0.12), in: Capsule())
+            .background(presentation.statusTone.color.opacity(0.12), in: Capsule())
     }
+}
 
-    private var tint: Color {
-        switch presentation.kind {
-        case .playing:
-            .green
-        case .paused:
-            .orange
-        case .idle:
+extension NowPlayingPresentation.StatusTone {
+    fileprivate var color: Color {
+        switch self {
+        case .neutral:
             .secondary
-        case .unavailable:
+        case .positive:
+            .green
+        case .caution:
+            .orange
+        case .negative:
             .red
         }
     }
