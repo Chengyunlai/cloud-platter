@@ -167,7 +167,9 @@ struct MediaRemoteObservationSourceTests {
             paths: .testFixture,
             executor: executor,
             restartDelays: [.zero],
-            initialOutputTimeout: .seconds(1)
+            initialOutputTimeout: .seconds(1),
+            recoveryCooldown: .zero,
+            maximumRecoveryCycles: 2
         )
         var states: [NowPlayingState] = []
 
@@ -203,6 +205,45 @@ struct MediaRemoteObservationSourceTests {
 
         #expect(states.map(\.status) == [.unavailable])
         #expect(executor.streamInvocationCount == 3)
+    }
+
+    @Test("短重试耗尽后仍会在冷却周期恢复")
+    func recoveryContinuesAfterBoundedRetryCycle() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [
+                .success([
+                    Data(
+                        #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":"初始节目"}}"#
+                            .utf8
+                    )
+                ]),
+                .failure(.terminated(exitCode: 1)),
+                .success([
+                    Data(
+                        #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":"恢复节目"}}"#
+                            .utf8
+                    )
+                ]),
+            ]
+        )
+        let source = MediaRemoteObservationSource(
+            paths: .testFixture,
+            executor: executor,
+            restartDelays: [.zero],
+            initialOutputTimeout: .seconds(1)
+        )
+        var recovered = false
+
+        for await state in source.states() {
+            if state.title == "恢复节目" {
+                recovered = true
+                break
+            }
+        }
+
+        #expect(recovered)
+        #expect((3...4).contains(executor.streamInvocationCount))
     }
 }
 

@@ -21,6 +21,8 @@ public struct MediaRemoteObservationSource: Sendable {
     private let executor: any MediaRemoteProcessExecuting
     private let restartDelays: [Duration]
     private let initialOutputTimeout: Duration
+    private let recoveryCooldown: Duration
+    private let maximumRecoveryCycles: Int?
 
     public init() {
         let paths = MediaRemoteAdapterPaths.bundled()
@@ -28,7 +30,9 @@ public struct MediaRemoteObservationSource: Sendable {
             paths: paths,
             executor: FoundationMediaRemoteProcessExecutor(executable: paths.supervisor),
             restartDelays: [.seconds(1), .seconds(2), .seconds(4)],
-            initialOutputTimeout: .seconds(10)
+            initialOutputTimeout: .seconds(10),
+            recoveryCooldown: .seconds(30),
+            maximumRecoveryCycles: nil
         )
     }
 
@@ -36,12 +40,16 @@ public struct MediaRemoteObservationSource: Sendable {
         paths: MediaRemoteAdapterPaths,
         executor: any MediaRemoteProcessExecuting,
         restartDelays: [Duration],
-        initialOutputTimeout: Duration = .seconds(10)
+        initialOutputTimeout: Duration = .seconds(10),
+        recoveryCooldown: Duration = .zero,
+        maximumRecoveryCycles: Int? = 1
     ) {
         self.paths = paths
         self.executor = executor
         self.restartDelays = restartDelays
         self.initialOutputTimeout = initialOutputTimeout
+        self.recoveryCooldown = recoveryCooldown
+        self.maximumRecoveryCycles = maximumRecoveryCycles
     }
 
     /// 验证资源完整性及 Apple Perl 宿主当前是否仍具备 MediaRemote 能力。
@@ -71,50 +79,30 @@ public struct MediaRemoteObservationSource: Sendable {
     public func states() -> AsyncStream<NowPlayingState> {
         AsyncStream { continuation in
             let task = Task {
-                guard await checkCapability() == .available else {
-                    continuation.yield(NowPlayingState(status: .unavailable))
-                    continuation.finish()
-                    return
-                }
+                var completedRecoveryCycles = 0
 
-                let attemptDelays = [Duration.zero] + restartDelays
-                for (attempt, delay) in attemptDelays.enumerated() {
+                while !Task.isCancelled {
+                    if await checkCapability() == .available {
+                        await runStreamAttemptCycle(continuation: continuation)
+                    }
+
                     guard !Task.isCancelled else {
                         break
                     }
 
-                    if delay != .zero {
-                        do {
-                            try await Task.sleep(for: delay)
-                        } catch {
-                            break
-                        }
+                    continuation.yield(NowPlayingState(status: .unavailable))
+                    completedRecoveryCycles += 1
+
+                    if let maximumRecoveryCycles,
+                        completedRecoveryCycles >= maximumRecoveryCycles
+                    {
+                        break
                     }
 
-                    var decoder = MediaRemoteStreamDecoder()
                     do {
-                        for try await line in executor.lines(
-                            arguments: adapterArguments(
-                                command: .stream, options: ["--debounce=100"]),
-                            initialOutputTimeout: initialOutputTimeout
-                        ) {
-                            guard !Task.isCancelled else {
-                                break
-                            }
-
-                            do {
-                                continuation.yield(try decoder.decode(line: line))
-                            } catch {
-                                // 坏事件之后不能继续合并旧快照，必须重启并等待新的全量事件。
-                                throw MediaRemoteProcessError.invalidOutput
-                            }
-                        }
+                        try await Task.sleep(for: recoveryCooldown)
                     } catch {
-                        // 子进程异常只触发有上限的重启，不把 stderr 或原始内容写入日志。
-                    }
-
-                    if attempt == attemptDelays.indices.last {
-                        continuation.yield(NowPlayingState(status: .unavailable))
+                        break
                     }
                 }
 
@@ -124,6 +112,49 @@ public struct MediaRemoteObservationSource: Sendable {
             continuation.onTermination = { _ in
                 task.cancel()
             }
+        }
+    }
+
+    private func runStreamAttemptCycle(
+        continuation: AsyncStream<NowPlayingState>.Continuation
+    ) async {
+        let attemptDelays = [Duration.zero] + restartDelays
+        for delay in attemptDelays {
+            guard !Task.isCancelled else {
+                return
+            }
+
+            if delay != .zero {
+                do {
+                    try await Task.sleep(for: delay)
+                } catch {
+                    return
+                }
+            }
+
+            var decoder = MediaRemoteStreamDecoder()
+            do {
+                for try await line in executor.lines(
+                    arguments: adapterArguments(
+                        command: .stream, options: ["--debounce=100"]),
+                    initialOutputTimeout: initialOutputTimeout
+                ) {
+                    guard !Task.isCancelled else {
+                        return
+                    }
+
+                    do {
+                        continuation.yield(try decoder.decode(line: line))
+                    } catch {
+                        // 坏事件之后不能继续合并旧快照，必须重启并等待新的全量事件。
+                        throw MediaRemoteProcessError.invalidOutput
+                    }
+                }
+            } catch {
+                // 子进程异常只触发有上限的短重试，不把 stderr 或原始内容写入日志。
+            }
+
+            await Task.yield()
         }
     }
 
