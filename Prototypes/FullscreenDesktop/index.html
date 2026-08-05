@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>CloudPlatter 全屏桌面原型</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- 三个方案只用于比较结构，不代表最终材质质量。 -->
+    <main class="scene scene-a" data-variant="A" aria-label="方案 A，胡桃木唱机桌面">
+      <div class="a-light" aria-hidden="true"></div>
+      <section class="a-copy">
+        <p class="scene-name">CloudPlatter</p>
+        <h1>在城市入睡以前</h1>
+        <p class="artist">匿名乐队 · 夜航唱片</p>
+        <div class="playing-line"><span></span> 正在播放</div>
+      </section>
+      <div class="sleeve sleeve-a" aria-hidden="true">
+        <div class="cover-art cover-art-a"><span>夜航</span></div>
+        <small>ANONYMOUS RECORDS · CP 001</small>
+      </div>
+      <div class="turntable turntable-a" aria-hidden="true">
+        <div class="platter platter-a"><div class="record-label cover-art-a"></div></div>
+        <div class="tonearm tonearm-a"><i></i><b></b></div>
+        <div class="speed-knob"></div>
+        <div class="brand-plate">CLOUD PLATTER</div>
+      </div>
+    </main>
+
+    <main class="scene scene-b" data-variant="B" aria-label="方案 B，黑曜石设备桌面">
+      <div class="b-halo" aria-hidden="true"></div>
+      <div class="b-machine" aria-hidden="true">
+        <div class="platter platter-b"><div class="record-label cover-art-b"></div></div>
+        <div class="tonearm tonearm-b"><i></i><b></b></div>
+        <div class="b-led"></div>
+      </div>
+      <section class="b-copy">
+        <p class="scene-name">现在，桌面正在播放</p>
+        <h1>在城市入睡以前</h1>
+        <p class="artist">匿名乐队</p>
+        <div class="b-rule"></div>
+        <p class="album">选自《夜航唱片》</p>
+      </section>
+      <div class="sleeve sleeve-b" aria-hidden="true">
+        <div class="cover-art cover-art-b"><span>12:08</span></div>
+      </div>
+    </main>
+
+    <main class="scene scene-c" data-variant="C" aria-label="方案 C，唱片内页桌面">
+      <div class="c-orbit c-orbit-one" aria-hidden="true"></div>
+      <div class="c-orbit c-orbit-two" aria-hidden="true"></div>
+      <div class="sleeve sleeve-c" aria-hidden="true">
+        <div class="cover-art cover-art-c">
+          <span class="cover-number">03</span>
+          <span class="cover-title">夜色<br />缓慢经过</span>
+        </div>
+      </div>
+      <div class="platter platter-c" aria-hidden="true"><div class="record-label cover-art-c"></div></div>
+      <section class="c-copy">
+        <p class="scene-name">CloudPlatter / 当前唱片</p>
+        <h1>在城市入睡以前</h1>
+        <p class="artist">匿名乐队，夜航唱片</p>
+        <p class="c-note">让一张唱片成为桌面的时间刻度。</p>
+      </section>
+      <div class="c-status" aria-hidden="true"><span></span> 33⅓ RPM</div>
+    </main>
+
+    <nav class="prototype-switcher" aria-label="原型方案切换">
+      <button type="button" data-direction="previous" aria-label="上一个方案">←</button>
+      <div>
+        <strong id="variant-label">A — 胡桃木唱机</strong>
+        <small>PROTOTYPE · ISSUE #12</small>
+      </div>
+      <button type="button" data-direction="next" aria-label="下一个方案">→</button>
+    </nav>
+
+    <script src="app.js"></script>
+  </body>
+</html>

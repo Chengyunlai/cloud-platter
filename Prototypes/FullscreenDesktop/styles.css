@@ -1,0 +1,631 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  color: #f7f5f1;
+  background: #111;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+.scene {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.scene {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+}
+
+.scene[hidden] {
+  display: none;
+}
+
+.scene-name {
+  margin: 0 0 18px;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: clamp(13px, 1vw, 16px);
+  font-weight: 560;
+  letter-spacing: 0.02em;
+}
+
+.artist,
+.album {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: clamp(15px, 1.25vw, 21px);
+}
+
+.scene h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(36px, 4.4vw, 74px);
+  font-weight: 620;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.prototype-switcher {
+  position: fixed;
+  z-index: 20;
+  bottom: 22px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 310px;
+  padding: 8px;
+  color: #f8f8f8;
+  background: rgba(16, 16, 17, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.34);
+  transform: translateX(-50%);
+  backdrop-filter: blur(16px);
+}
+
+.prototype-switcher button {
+  width: 42px;
+  height: 42px;
+  color: inherit;
+  background: #2a2a2c;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.prototype-switcher button:hover {
+  background: #3a3a3d;
+}
+
+.prototype-switcher div {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  text-align: center;
+}
+
+.prototype-switcher strong {
+  font-size: 14px;
+}
+
+.prototype-switcher small {
+  color: #8f8f95;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.sleeve,
+.turntable,
+.platter,
+.tonearm {
+  position: absolute;
+}
+
+.cover-art {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.platter {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, transparent 0 9%, rgba(255, 255, 255, 0.08) 9.2% 9.6%, transparent 9.8% 57%, rgba(255, 255, 255, 0.13) 57.2% 57.5%, transparent 57.8% 70%, rgba(255, 255, 255, 0.07) 70.2% 70.6%, transparent 71%),
+    conic-gradient(from 16deg, #050505, #282828 7%, #090909 14%, #1d1d1d 22%, #050505 31%, #242424 41%, #080808 53%, #202020 64%, #060606 77%, #252525 89%, #050505);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08), inset 0 0 42px #000, 0 12px 20px rgba(0, 0, 0, 0.42);
+}
+
+.record-label {
+  position: absolute;
+  top: 34%;
+  left: 34%;
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.record-label::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5%;
+  aspect-ratio: 1;
+  background: #121212;
+  border-radius: 50%;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.tonearm {
+  width: 10px;
+  border-radius: 10px;
+  transform-origin: top center;
+}
+
+.tonearm::before {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  width: 42px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  content: "";
+  transform: translateX(-50%);
+}
+
+.tonearm i {
+  position: absolute;
+  bottom: -18px;
+  left: -5px;
+  width: 20px;
+  height: 34px;
+  border-radius: 4px;
+  transform: rotate(-8deg);
+}
+
+/* A：以完整环境和实体关系建立桌面背景感。 */
+.scene-a {
+  background:
+    radial-gradient(ellipse at 76% 8%, rgba(255, 222, 174, 0.25), transparent 31%),
+    linear-gradient(105deg, transparent 0 44%, rgba(49, 17, 7, 0.28) 44.3% 45%, transparent 45.4% 100%),
+    linear-gradient(12deg, #2b1008, #6f321a 46%, #3c170d 100%);
+}
+
+.scene-a::before,
+.scene-a::after {
+  position: absolute;
+  z-index: -1;
+  width: 120%;
+  height: 24%;
+  border-radius: 50%;
+  background: rgba(255, 206, 149, 0.055);
+  content: "";
+  filter: blur(10px);
+  transform: rotate(-4deg);
+}
+
+.scene-a::before {
+  top: 16%;
+  left: -7%;
+}
+
+.scene-a::after {
+  right: -4%;
+  bottom: 4%;
+}
+
+.a-light {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(108deg, rgba(255, 227, 185, 0.12), transparent 38% 72%, rgba(0, 0, 0, 0.24));
+}
+
+.a-copy {
+  position: absolute;
+  z-index: 4;
+  top: 10%;
+  left: 7%;
+  text-shadow: 0 2px 3px rgba(30, 7, 2, 0.42);
+}
+
+.playing-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+}
+
+.playing-line span,
+.c-status span {
+  width: 7px;
+  height: 7px;
+  background: #d9ff6d;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(211, 255, 101, 0.72);
+}
+
+.sleeve-a {
+  z-index: 1;
+  bottom: 7%;
+  left: 7%;
+  width: min(31vw, 450px);
+  aspect-ratio: 1;
+  padding: 2.6%;
+  background: #d8cdb9;
+  border-radius: 3px;
+  box-shadow: 4px 18px 24px rgba(16, 4, 0, 0.36);
+  transform: rotate(-3deg);
+}
+
+.sleeve-a small {
+  position: absolute;
+  right: 7%;
+  bottom: 2.7%;
+  color: #5e584d;
+  font-size: clamp(7px, 0.55vw, 10px);
+  letter-spacing: 0.07em;
+}
+
+.cover-art-a {
+  background:
+    radial-gradient(circle at 72% 30%, #ffd45b 0 13%, transparent 13.4%),
+    radial-gradient(circle at 29% 68%, #ad343e 0 26%, transparent 26.4%),
+    linear-gradient(145deg, #15283c 0 48%, #e9b873 48.5% 64%, #708b79 64.5%);
+}
+
+.cover-art-a span {
+  position: absolute;
+  top: 9%;
+  left: 9%;
+  font-family: "Songti SC", serif;
+  font-size: clamp(20px, 3vw, 46px);
+  letter-spacing: 0.12em;
+}
+
+.turntable-a {
+  z-index: 2;
+  right: 5%;
+  bottom: 9%;
+  width: min(56vw, 850px);
+  aspect-ratio: 1.55;
+  background: linear-gradient(145deg, #e6dfd2, #afa795 68%, #8a8273);
+  border-radius: 18px;
+  box-shadow: 0 28px 42px rgba(17, 4, 0, 0.46), inset 0 1px rgba(255, 255, 255, 0.65), inset 0 -2px rgba(68, 57, 44, 0.34);
+}
+
+.platter-a {
+  top: 8%;
+  left: 6%;
+  width: 58%;
+  aspect-ratio: 1;
+}
+
+.tonearm-a {
+  top: 16%;
+  right: 18%;
+  height: 58%;
+  background: linear-gradient(90deg, #6b6b66, #e6e4dc 44%, #77766e);
+  box-shadow: 3px 5px 7px rgba(0, 0, 0, 0.3);
+  transform: rotate(18deg);
+}
+
+.tonearm-a::before {
+  background: radial-gradient(circle, #262623 0 23%, #c9c5b9 25% 48%, #55534c 51% 68%, #b4b0a5 71%);
+  box-shadow: 0 5px 9px rgba(0, 0, 0, 0.28);
+}
+
+.tonearm-a i {
+  background: linear-gradient(90deg, #2a2926, #c8c5bb);
+}
+
+.speed-knob {
+  position: absolute;
+  right: 10%;
+  bottom: 15%;
+  width: 7%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #a88e68, #473a2d 68%);
+  box-shadow: 0 6px 9px rgba(0, 0, 0, 0.32);
+}
+
+.brand-plate {
+  position: absolute;
+  right: 4%;
+  bottom: 3%;
+  padding: 5px 7px;
+  color: #d4cec2;
+  background: #4b4842;
+  border-radius: 3px;
+  font-size: clamp(6px, 0.55vw, 9px);
+  letter-spacing: 0.11em;
+}
+
+/* B：让设备成为安静的主角，减少环境叙事。 */
+.scene-b {
+  background: radial-gradient(circle at 28% 43%, #25252a, #0c0c0e 52%, #050506 100%);
+}
+
+.b-halo {
+  position: absolute;
+  top: 8%;
+  left: 2%;
+  width: 62vw;
+  height: 76vh;
+  border-radius: 50%;
+  background: rgba(116, 124, 149, 0.1);
+  filter: blur(80px);
+}
+
+.b-machine {
+  position: absolute;
+  top: 50%;
+  left: 7%;
+  width: min(58vw, 920px);
+  aspect-ratio: 1.5;
+  background: linear-gradient(145deg, #242528, #101113 58%, #08090a);
+  border-radius: 12px;
+  box-shadow: 0 28px 54px rgba(0, 0, 0, 0.62), inset 0 1px rgba(255, 255, 255, 0.09);
+  transform: translateY(-50%);
+}
+
+.platter-b {
+  top: 7%;
+  left: 5%;
+  width: 59%;
+  aspect-ratio: 1;
+}
+
+.cover-art-b {
+  background:
+    linear-gradient(36deg, transparent 0 45%, rgba(255, 255, 255, 0.7) 45.3% 46%, transparent 46.4%),
+    radial-gradient(circle at 68% 28%, #d6ff81 0 10%, transparent 10.5%),
+    linear-gradient(140deg, #28263d, #6b507c 58%, #b16b62);
+}
+
+.tonearm-b {
+  top: 15%;
+  right: 18%;
+  height: 60%;
+  background: linear-gradient(90deg, #333, #bbb 50%, #4d4d4d);
+  transform: rotate(21deg);
+}
+
+.tonearm-b::before {
+  background: radial-gradient(circle, #111 0 30%, #7a7a7a 32% 56%, #202020 58%);
+}
+
+.tonearm-b i {
+  background: #c4c4c4;
+}
+
+.b-led {
+  position: absolute;
+  right: 7%;
+  bottom: 10%;
+  width: 6px;
+  height: 6px;
+  background: #d8ff69;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #c8ff38;
+}
+
+.b-copy {
+  position: absolute;
+  z-index: 2;
+  top: 16%;
+  right: 4%;
+  width: 34vw;
+}
+
+.b-copy h1 {
+  max-width: none;
+  font-size: clamp(40px, 4.2vw, 68px);
+}
+
+.b-rule {
+  width: 52px;
+  height: 2px;
+  margin-top: 30px;
+  background: #d5ff68;
+}
+
+.sleeve-b {
+  z-index: 3;
+  right: 7%;
+  bottom: 8%;
+  width: min(19vw, 300px);
+  aspect-ratio: 1;
+  padding: 10px;
+  background: #17171a;
+  border-radius: 4px;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.62);
+  transform: rotate(4deg);
+}
+
+.cover-art-b span {
+  position: absolute;
+  right: 9%;
+  bottom: 8%;
+  font-size: clamp(18px, 2.6vw, 42px);
+  font-variant-numeric: tabular-nums;
+}
+
+/* C：由专辑色彩铺满桌面，更像一张会变化的唱片内页。 */
+.scene-c {
+  color: #13262b;
+  background:
+    radial-gradient(circle at 75% 18%, rgba(255, 255, 255, 0.37), transparent 24%),
+    linear-gradient(118deg, #df5f42 0 36%, #f1b45d 36.3% 60%, #8dbea8 60.3% 100%);
+}
+
+.c-orbit {
+  position: absolute;
+  border: 1px solid rgba(17, 43, 49, 0.2);
+  border-radius: 50%;
+}
+
+.c-orbit-one {
+  top: -16vw;
+  right: -9vw;
+  width: 56vw;
+  aspect-ratio: 1;
+}
+
+.c-orbit-two {
+  right: 9vw;
+  bottom: -28vw;
+  width: 68vw;
+  aspect-ratio: 1;
+}
+
+.sleeve-c {
+  z-index: 3;
+  top: 50%;
+  left: 8%;
+  width: min(36vw, 550px);
+  aspect-ratio: 1;
+  padding: 13px;
+  background: #f2e7cd;
+  box-shadow: 0 24px 36px rgba(55, 43, 22, 0.32);
+  transform: translateY(-50%) rotate(-2deg);
+}
+
+.cover-art-c {
+  color: #f6efdf;
+  background:
+    radial-gradient(circle at 68% 68%, #e8c365 0 13%, transparent 13.4%),
+    linear-gradient(135deg, #17363c 0 43%, #bf4b3c 43.4% 70%, #719985 70.4%);
+}
+
+.cover-number {
+  position: absolute;
+  top: 8%;
+  right: 8%;
+  font-size: clamp(18px, 2vw, 32px);
+}
+
+.cover-title {
+  position: absolute;
+  bottom: 8%;
+  left: 8%;
+  font-family: "Songti SC", serif;
+  font-size: clamp(30px, 4vw, 64px);
+  line-height: 1.05;
+}
+
+.platter-c {
+  z-index: 2;
+  top: 50%;
+  left: 35%;
+  width: min(45vw, 690px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+}
+
+.c-copy {
+  position: absolute;
+  z-index: 4;
+  right: 6%;
+  bottom: 13%;
+  width: 32vw;
+  text-align: right;
+}
+
+.c-copy .scene-name,
+.c-copy .artist {
+  color: rgba(19, 38, 43, 0.72);
+}
+
+.c-copy h1 {
+  max-width: none;
+  font-family: "Songti SC", "STSong", serif;
+  font-size: clamp(38px, 4.7vw, 76px);
+  font-weight: 700;
+}
+
+.c-note {
+  margin: 36px 0 0 auto;
+  color: rgba(19, 38, 43, 0.68);
+  font-size: clamp(13px, 1.1vw, 17px);
+}
+
+.c-status {
+  position: absolute;
+  top: 6%;
+  right: 6%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(19, 38, 43, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.c-status span {
+  background: #17363c;
+  box-shadow: none;
+}
+
+@media (max-aspect-ratio: 4 / 3) {
+  .turntable-a {
+    right: -5%;
+    width: 68vw;
+  }
+
+  .sleeve-a {
+    width: 38vw;
+  }
+
+  .b-copy {
+    top: 9%;
+    right: 5%;
+  }
+
+  .sleeve-b {
+    width: 24vw;
+  }
+
+  .c-copy {
+    width: 38vw;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .platter-a,
+  .platter-b {
+    animation: spin 8s linear infinite;
+  }
+
+  .platter-c {
+    animation: spin-c 8s linear infinite;
+  }
+
+  .scene:not([hidden]) .sleeve,
+  .scene:not([hidden]) .turntable,
+  .scene:not([hidden]) .b-machine,
+  .scene:not([hidden]) .c-copy {
+    animation: settle 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-c {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}

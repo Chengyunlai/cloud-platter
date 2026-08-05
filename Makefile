@@ -1,4 +1,4 @@
-.PHONY: adapter build test lint format check package clean
+.PHONY: adapter build test lint format check package design-prototype clean
 
 VERSION ?= 0.0.0-dev
 
@@ -21,6 +21,9 @@ check: lint build test
 
 package:
 	./scripts/package-release.sh "$(VERSION)"
+
+design-prototype:
+	python3 -m http.server 4173 --directory Prototypes/FullscreenDesktop
 
 clean:
 	swift package clean
