@@ -150,6 +150,7 @@ private actor FallbackPlaybackStateSelector {
             return
         }
 
+        primaryFallbackState = NowPlayingState(status: .unavailable)
         isFallbackNeeded = true
         resumeFallbackWaiters(with: true)
     }

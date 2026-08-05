@@ -150,6 +150,38 @@ struct FallbackPlaybackObservationSourceTests {
         primary.finish()
     }
 
+    @Test("主事件流静默且备用链路失败时不保留过期歌曲")
+    func silentPrimaryWithFailedFallbackBecomesUnavailable() async {
+        let primary = ManualPlaybackObservationSource()
+        let initialState = NowPlayingState(title: "匿名歌曲", status: .playing)
+        let fallback = SequenceSnapshotFetcher(
+            states: [NowPlayingState(status: .unavailable)]
+        )
+        let source = makeSource(
+            primary: primary,
+            fallback: fallback,
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .seconds(1),
+                idleInterval: .seconds(1),
+                failureInterval: .seconds(1),
+                primarySilenceTimeout: .milliseconds(10)
+            )
+        )
+        let statesTask = Task {
+            var states: [NowPlayingState] = []
+            for await state in source.states().prefix(2) {
+                states.append(state)
+            }
+            return states
+        }
+
+        primary.send(initialState)
+        let states = await statesTask.value
+
+        #expect(states == [initialState, NowPlayingState(status: .unavailable)])
+        primary.finish()
+    }
+
     @Test("级联快照取消后不再启动下一来源")
     func cancelledCascadeDoesNotStartNextSource() async {
         let first = CancellationRecordingSnapshotFetcher()
