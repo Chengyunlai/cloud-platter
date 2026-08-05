@@ -121,7 +121,6 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
             entry.activity.isSessionActive = true
         }
         synchronizePanels()
-        updateWindowVisibility()
     }
 
     @objc private func screenParametersDidChange() {
