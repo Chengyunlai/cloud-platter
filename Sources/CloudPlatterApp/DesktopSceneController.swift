@@ -24,10 +24,6 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     func show() {
         isShowing = true
         synchronizePanels()
-        for entry in panels.values where !entry.panel.isVisible {
-            entry.panel.orderFrontRegardless()
-        }
-        updateWindowVisibility()
     }
 
     func windowDidChangeOcclusionState(_ notification: Notification) {
