@@ -73,9 +73,8 @@ struct DesktopSceneTests {
     }
 
     @MainActor
-    @Test("全屏场景在一倍与二倍缩放下输出原生像素尺寸")
+    @Test("三种屏幕比例在一倍与二倍缩放下输出原生像素尺寸")
     func fullScreenSceneRendersAtNativePixelSizes() throws {
-        let canvasSize = CGSize(width: 1_280, height: 720)
         let state = NowPlayingState(
             title: "匿名歌曲",
             artist: "匿名艺人",
@@ -83,24 +82,27 @@ struct DesktopSceneTests {
             status: .paused
         )
 
-        for expectation in [
-            (scale: CGFloat(1), width: 1_280, height: 720),
-            (scale: CGFloat(2), width: 2_560, height: 1_440),
+        for canvasSize in [
+            CGSize(width: 1_280, height: 720),
+            CGSize(width: 1_440, height: 900),
+            CGSize(width: 1_728, height: 720),
         ] {
-            let renderer = ImageRenderer(
-                content: DesktopSceneView(
-                    nowPlayingState: state,
-                    isWindowVisible: true,
-                    isSessionActive: true
+            for scale in [CGFloat(1), CGFloat(2)] {
+                let renderer = ImageRenderer(
+                    content: DesktopSceneView(
+                        nowPlayingState: state,
+                        isWindowVisible: true,
+                        isSessionActive: true
+                    )
+                    .frame(width: canvasSize.width, height: canvasSize.height)
                 )
-                .frame(width: canvasSize.width, height: canvasSize.height)
-            )
-            renderer.proposedSize = ProposedViewSize(canvasSize)
-            renderer.scale = expectation.scale
+                renderer.proposedSize = ProposedViewSize(canvasSize)
+                renderer.scale = scale
 
-            let image = try #require(renderer.cgImage)
-            #expect(image.width == expectation.width)
-            #expect(image.height == expectation.height)
+                let image = try #require(renderer.cgImage)
+                #expect(image.width == Int(canvasSize.width * scale))
+                #expect(image.height == Int(canvasSize.height * scale))
+            }
         }
     }
 
