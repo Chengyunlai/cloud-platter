@@ -1,39 +1,5 @@
 import Foundation
 
-/// 定位应用包内 MediaRemote Adapter 所需的全部运行时资源。
-public struct MediaRemoteAdapterPaths: Equatable, Sendable {
-    public let perlExecutable: URL
-    public let script: URL
-    public let framework: URL
-    public let testClient: URL
-
-    public init(
-        perlExecutable: URL,
-        script: URL,
-        framework: URL,
-        testClient: URL
-    ) {
-        self.perlExecutable = perlExecutable
-        self.script = script
-        self.framework = framework
-        self.testClient = testClient
-    }
-
-    /// 按 CloudPlatter 安装包约定生成默认资源路径。
-    public static func bundled(in bundle: Bundle = .main) -> Self {
-        let resourceRoot =
-            bundle.resourceURL ?? bundle.bundleURL.appendingPathComponent("Resources")
-        let adapterRoot = resourceRoot.appendingPathComponent("MediaRemoteAdapter")
-
-        return Self(
-            perlExecutable: URL(fileURLWithPath: "/usr/bin/perl"),
-            script: adapterRoot.appendingPathComponent("mediaremote-adapter.pl"),
-            framework: adapterRoot.appendingPathComponent("MediaRemoteAdapter.framework"),
-            testClient: adapterRoot.appendingPathComponent("MediaRemoteAdapterTestClient")
-        )
-    }
-}
-
 /// 描述适配器在当前系统不可用的脱敏原因。
 public enum MediaRemoteAdapterUnavailableReason: Equatable, Sendable {
     case missingPerl
@@ -54,23 +20,28 @@ public struct MediaRemoteObservationSource: Sendable {
     private let paths: MediaRemoteAdapterPaths
     private let executor: any MediaRemoteProcessExecuting
     private let restartDelays: [Duration]
+    private let initialOutputTimeout: Duration
 
-    public init(paths: MediaRemoteAdapterPaths = .bundled()) {
+    public init() {
+        let paths = MediaRemoteAdapterPaths.bundled()
         self.init(
             paths: paths,
-            executor: FoundationMediaRemoteProcessExecutor(executable: paths.perlExecutable),
-            restartDelays: [.seconds(1), .seconds(2), .seconds(4)]
+            executor: FoundationMediaRemoteProcessExecutor(executable: paths.supervisor),
+            restartDelays: [.seconds(1), .seconds(2), .seconds(4)],
+            initialOutputTimeout: .seconds(10)
         )
     }
 
     init(
         paths: MediaRemoteAdapterPaths,
         executor: any MediaRemoteProcessExecuting,
-        restartDelays: [Duration]
+        restartDelays: [Duration],
+        initialOutputTimeout: Duration = .seconds(10)
     ) {
         self.paths = paths
         self.executor = executor
         self.restartDelays = restartDelays
+        self.initialOutputTimeout = initialOutputTimeout
     }
 
     /// 验证资源完整性及 Apple Perl 宿主当前是否仍具备 MediaRemote 能力。
@@ -91,7 +62,7 @@ public struct MediaRemoteObservationSource: Sendable {
             return .unavailable(.capabilityTestFailed(exitCode: exitCode))
         case .failure(.timedOut):
             return .unavailable(.capabilityTestTimedOut)
-        case .failure(.launchFailed), .failure(.terminated):
+        case .failure(.launchFailed), .failure(.terminated), .failure(.invalidOutput):
             return .unavailable(.launchFailed)
         }
     }
@@ -124,7 +95,8 @@ public struct MediaRemoteObservationSource: Sendable {
                     do {
                         for try await line in executor.lines(
                             arguments: adapterArguments(
-                                command: "stream", options: ["--debounce=100"])
+                                command: "stream", options: ["--debounce=100"]),
+                            initialOutputTimeout: initialOutputTimeout
                         ) {
                             guard !Task.isCancelled else {
                                 break
@@ -133,11 +105,12 @@ public struct MediaRemoteObservationSource: Sendable {
                             do {
                                 continuation.yield(try decoder.decode(line: line))
                             } catch {
-                                continuation.yield(NowPlayingState(status: .unavailable))
+                                // 坏事件之后不能继续合并旧快照，必须重启并等待新的全量事件。
+                                throw MediaRemoteProcessError.invalidOutput
                             }
                         }
                     } catch {
-                        // 子进程异常与解析失败都只转换为脱敏状态，不把 stderr 或原始内容写入日志。
+                        // 子进程异常只触发有上限的重启，不把 stderr 或原始内容写入日志。
                     }
 
                     if attempt == attemptDelays.indices.last {
@@ -160,13 +133,20 @@ public struct MediaRemoteObservationSource: Sendable {
             return .missingPerl
         }
 
-        let requiredResources = [paths.script, paths.framework, paths.testClient]
+        let requiredResources = [
+            paths.supervisor,
+            paths.script,
+            paths.framework,
+            paths.testClient,
+        ]
         for resource in requiredResources where !fileManager.fileExists(atPath: resource.path) {
             return .missingResource(resource.lastPathComponent)
         }
 
-        guard fileManager.isExecutableFile(atPath: paths.testClient.path) else {
-            return .missingResource(paths.testClient.lastPathComponent)
+        let requiredExecutables = [paths.supervisor, paths.testClient]
+        for executable in requiredExecutables
+        where !fileManager.isExecutableFile(atPath: executable.path) {
+            return .missingResource(executable.lastPathComponent)
         }
 
         return nil
@@ -174,222 +154,11 @@ public struct MediaRemoteObservationSource: Sendable {
 
     private func adapterArguments(command: String, options: [String] = []) -> [String] {
         [
+            paths.perlExecutable.path,
             paths.script.path,
             paths.framework.path,
             paths.testClient.path,
             command,
         ] + options
-    }
-}
-
-enum MediaRemoteProcessError: Error, Equatable, Sendable {
-    case launchFailed
-    case timedOut
-    case terminated(exitCode: Int32)
-}
-
-protocol MediaRemoteProcessExecuting: Sendable {
-    func run(arguments: [String], timeout: Duration) async
-        -> Result<Int32, MediaRemoteProcessError>
-    func lines(arguments: [String]) -> AsyncThrowingStream<Data, any Error>
-}
-
-private final class FoundationMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
-    @unchecked Sendable
-{
-    private let executable: URL
-
-    init(executable: URL) {
-        self.executable = executable
-    }
-
-    func run(arguments: [String], timeout: Duration) async
-        -> Result<Int32, MediaRemoteProcessError>
-    {
-        let process = Process()
-        process.executableURL = executable
-        process.arguments = arguments
-        process.standardOutput = FileHandle.nullDevice
-        process.standardError = FileHandle.nullDevice
-
-        let processBox = RunningProcessBox(process: process)
-
-        return await withCheckedContinuation { continuation in
-            let completion = ProcessCompletion(continuation: continuation)
-            process.terminationHandler = { terminatedProcess in
-                completion.finish(.success(terminatedProcess.terminationStatus))
-            }
-
-            do {
-                try process.run()
-            } catch {
-                completion.finish(.failure(.launchFailed))
-                return
-            }
-
-            Task {
-                do {
-                    try await Task.sleep(for: timeout)
-                } catch {
-                    return
-                }
-
-                if completion.finish(.failure(.timedOut)) {
-                    processBox.terminate()
-                }
-            }
-        }
-    }
-
-    func lines(arguments: [String]) -> AsyncThrowingStream<Data, any Error> {
-        AsyncThrowingStream { continuation in
-            let process = Process()
-            let outputPipe = Pipe()
-            process.executableURL = executable
-            process.arguments = arguments
-            process.standardOutput = outputPipe
-            process.standardError = FileHandle.nullDevice
-
-            let processBox = RunningProcessBox(process: process, outputPipe: outputPipe)
-            let emitter = LineEmitter(continuation: continuation)
-
-            do {
-                try process.run()
-            } catch {
-                continuation.finish(throwing: MediaRemoteProcessError.launchFailed)
-                return
-            }
-
-            let readerTask = Task.detached {
-                while !Task.isCancelled {
-                    let data = processBox.readAvailableData()
-                    guard !data.isEmpty else {
-                        break
-                    }
-                    emitter.receive(data)
-                }
-
-                processBox.waitUntilExit()
-                emitter.finish(exitCode: processBox.terminationStatus)
-            }
-
-            continuation.onTermination = { _ in
-                readerTask.cancel()
-                processBox.terminate()
-            }
-        }
-    }
-}
-
-private final class RunningProcessBox: @unchecked Sendable {
-    private let process: Process
-    private let outputPipe: Pipe?
-
-    init(process: Process, outputPipe: Pipe? = nil) {
-        self.process = process
-        self.outputPipe = outputPipe
-    }
-
-    var terminationStatus: Int32 {
-        process.terminationStatus
-    }
-
-    func readAvailableData() -> Data {
-        outputPipe?.fileHandleForReading.availableData ?? Data()
-    }
-
-    func waitUntilExit() {
-        process.waitUntilExit()
-    }
-
-    func terminate() {
-        guard process.isRunning else {
-            return
-        }
-        process.terminate()
-    }
-}
-
-private final class ProcessCompletion: @unchecked Sendable {
-    private let lock = NSLock()
-    private var continuation: CheckedContinuation<Result<Int32, MediaRemoteProcessError>, Never>?
-
-    init(continuation: CheckedContinuation<Result<Int32, MediaRemoteProcessError>, Never>) {
-        self.continuation = continuation
-    }
-
-    @discardableResult
-    func finish(_ result: Result<Int32, MediaRemoteProcessError>) -> Bool {
-        lock.lock()
-        guard let continuation else {
-            lock.unlock()
-            return false
-        }
-        self.continuation = nil
-        lock.unlock()
-
-        continuation.resume(returning: result)
-        return true
-    }
-}
-
-private final class LineEmitter: @unchecked Sendable {
-    private let lock = NSLock()
-    private var buffer = Data()
-    private var continuation: AsyncThrowingStream<Data, any Error>.Continuation?
-
-    init(continuation: AsyncThrowingStream<Data, any Error>.Continuation) {
-        self.continuation = continuation
-    }
-
-    func receive(_ data: Data) {
-        lock.lock()
-        guard let continuation else {
-            lock.unlock()
-            return
-        }
-
-        buffer.append(data)
-        var lines: [Data] = []
-        while let newlineIndex = buffer.firstIndex(of: 0x0A) {
-            var line = Data(buffer[..<newlineIndex])
-            buffer.removeSubrange(...newlineIndex)
-            if line.last == 0x0D {
-                line.removeLast()
-            }
-            if !line.isEmpty {
-                lines.append(line)
-            }
-        }
-        lock.unlock()
-
-        for line in lines {
-            continuation.yield(line)
-        }
-    }
-
-    func finish(exitCode: Int32) {
-        lock.lock()
-        guard let continuation else {
-            lock.unlock()
-            return
-        }
-
-        let trailingLine = buffer.isEmpty ? nil : buffer
-        buffer.removeAll(keepingCapacity: false)
-        self.continuation = nil
-        lock.unlock()
-
-        if let trailingLine {
-            continuation.yield(trailingLine)
-        }
-
-        if exitCode == 0 {
-            continuation.finish()
-        } else {
-            continuation.finish(
-                throwing: MediaRemoteProcessError.terminated(exitCode: exitCode)
-            )
-        }
     }
 }

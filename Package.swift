@@ -19,7 +19,8 @@ let package = Package(
         ),
         .testTarget(
             name: "CloudPlatterCoreTests",
-            dependencies: ["CloudPlatterCore"]
+            dependencies: ["CloudPlatterCore"],
+            resources: [.copy("Fixtures")]
         ),
     ]
 )

@@ -1,10 +1,11 @@
 import AppKit
 import CloudPlatterCore
+import Combine
 import SwiftUI
 
 @main
 struct CloudPlatterApp: App {
-    private let nowPlayingState = NowPlayingState.idle
+    @StateObject private var playbackModel = PlaybackModel()
 
     var body: some Scene {
         MenuBarExtra("CloudPlatter", systemImage: "record.circle") {
@@ -19,21 +20,43 @@ struct CloudPlatterApp: App {
         }
 
         Settings {
-            SettingsView(nowPlayingState: nowPlayingState)
+            SettingsView(nowPlayingState: playbackModel.nowPlayingState)
         }
     }
 
     private var statusText: String {
-        switch nowPlayingState.status {
+        switch playbackModel.nowPlayingState.status {
         case .idle:
             "等待网易云音乐播放…"
         case .playing:
-            nowPlayingState.title ?? "正在播放"
+            playbackModel.nowPlayingState.title ?? "正在播放"
         case .paused:
-            nowPlayingState.title ?? "已暂停"
+            playbackModel.nowPlayingState.title ?? "已暂停"
         case .unavailable:
             "当前系统暂不支持"
         }
+    }
+}
+
+@MainActor
+private final class PlaybackModel: ObservableObject {
+    @Published private(set) var nowPlayingState = NowPlayingState.idle
+
+    private var observationTask: Task<Void, Never>?
+
+    init(source: MediaRemoteObservationSource = MediaRemoteObservationSource()) {
+        observationTask = Task { [weak self] in
+            for await state in source.states() {
+                guard let self else {
+                    return
+                }
+                nowPlayingState = state
+            }
+        }
+    }
+
+    deinit {
+        observationTask?.cancel()
     }
 }
 

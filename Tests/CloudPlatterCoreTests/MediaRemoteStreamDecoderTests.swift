@@ -65,6 +65,26 @@ struct MediaRemoteStreamDecoderTests {
         #expect(state == .idle)
     }
 
+    @Test("来源切换到其他播放器时清空网易云状态")
+    func sourceSwitchClearsNeteaseState() throws {
+        var decoder = MediaRemoteStreamDecoder()
+        _ = try decoder.decode(
+            line: Data(
+                #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":"网易云歌曲"}}"#
+                    .utf8
+            )
+        )
+
+        let state = try decoder.decode(
+            line: Data(
+                #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.apple.Music","playing":true,"title":"其他歌曲"}}"#
+                    .utf8
+            )
+        )
+
+        #expect(state == .idle)
+    }
+
     @Test("空负载表示系统当前没有媒体")
     func emptyPayloadBecomesIdle() throws {
         var decoder = MediaRemoteStreamDecoder()
@@ -91,6 +111,20 @@ struct MediaRemoteStreamDecoderTests {
         #expect(state.sourceBundleIdentifier == "com.netease.163music")
     }
 
+    @Test("必要字段类型变化时进入不可用状态")
+    func invalidRequiredFieldTypeBecomesUnavailable() throws {
+        var decoder = MediaRemoteStreamDecoder()
+
+        let state = try decoder.decode(
+            line: Data(
+                #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":42}}"#
+                    .utf8
+            )
+        )
+
+        #expect(state.status == .unavailable)
+    }
+
     @Test("未知事件类型被拒绝")
     func unknownEventTypeThrows() {
         var decoder = MediaRemoteStreamDecoder()
@@ -100,5 +134,26 @@ struct MediaRemoteStreamDecoderTests {
                 line: Data(#"{"type":"notice","diff":false,"payload":{}}"#.utf8)
             )
         }
+    }
+
+    @Test("匿名 fixture 与实时事件使用相同转换路径")
+    func recordedFixtureUsesProductionDecoder() throws {
+        let fixtureURL = try #require(
+            Bundle.module.url(
+                forResource: "netease-stream",
+                withExtension: "ndjson",
+                subdirectory: "Fixtures"
+            )
+        )
+        let fixture = try String(contentsOf: fixtureURL, encoding: .utf8)
+        var decoder = MediaRemoteStreamDecoder()
+        var states: [NowPlayingState] = []
+
+        for line in fixture.split(whereSeparator: \.isNewline) {
+            states.append(try decoder.decode(line: Data(line.utf8)))
+        }
+
+        #expect(states.map(\.status) == [.playing, .paused, .playing])
+        #expect(states.map(\.title) == ["匿名歌曲一", "匿名歌曲一", "匿名歌曲二"])
     }
 }

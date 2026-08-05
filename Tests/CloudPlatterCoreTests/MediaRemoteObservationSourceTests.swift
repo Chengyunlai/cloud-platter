@@ -14,7 +14,8 @@ struct MediaRemoteObservationSourceTests {
         let source = MediaRemoteObservationSource(
             paths: .testFixture,
             executor: executor,
-            restartDelays: []
+            restartDelays: [],
+            initialOutputTimeout: .seconds(1)
         )
 
         let capability = await source.checkCapability()
@@ -39,7 +40,8 @@ struct MediaRemoteObservationSourceTests {
         let source = MediaRemoteObservationSource(
             paths: .testFixture,
             executor: executor,
-            restartDelays: []
+            restartDelays: [],
+            initialOutputTimeout: .seconds(1)
         )
         var states: [NowPlayingState] = []
 
@@ -60,7 +62,8 @@ struct MediaRemoteObservationSourceTests {
         let source = MediaRemoteObservationSource(
             paths: .testFixture,
             executor: executor,
-            restartDelays: []
+            restartDelays: [],
+            initialOutputTimeout: .seconds(1)
         )
         var states: [NowPlayingState] = []
 
@@ -71,20 +74,118 @@ struct MediaRemoteObservationSourceTests {
         #expect(states.count == 1)
         #expect(states.first?.status == .unavailable)
     }
+
+    @Test("首包超时后进入不可用状态")
+    func initialOutputTimeoutProducesUnavailableState() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let source = MediaRemoteObservationSource(
+            paths: .testFixture,
+            executor: executor,
+            restartDelays: [],
+            initialOutputTimeout: .milliseconds(1)
+        )
+        var states: [NowPlayingState] = []
+
+        for await state in source.states() {
+            states.append(state)
+        }
+
+        #expect(states.map(\.status) == [.unavailable])
+        #expect(executor.streamInvocationCount == 1)
+    }
+
+    @Test("异常输出会丢弃旧快照并从新的全量事件恢复")
+    func invalidOutputRestartsWithFreshSnapshot() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [
+                .success([
+                    Data(
+                        #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":"旧歌曲"}}"#
+                            .utf8
+                    ),
+                    Data("not-json".utf8),
+                ]),
+                .success([
+                    Data(
+                        #"{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":"新歌曲"}}"#
+                            .utf8
+                    )
+                ]),
+            ]
+        )
+        let source = MediaRemoteObservationSource(
+            paths: .testFixture,
+            executor: executor,
+            restartDelays: [.zero],
+            initialOutputTimeout: .seconds(1)
+        )
+        var states: [NowPlayingState] = []
+
+        for await state in source.states() {
+            states.append(state)
+        }
+
+        #expect(states.map(\.title) == ["旧歌曲", "新歌曲", nil])
+        #expect(states.last?.status == .unavailable)
+    }
+
+    @Test("意外退出只执行有限次数的恢复")
+    func unexpectedExitHasBoundedRetries() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [
+                .failure(.terminated(exitCode: 1)),
+                .failure(.terminated(exitCode: 1)),
+                .failure(.terminated(exitCode: 1)),
+            ]
+        )
+        let source = MediaRemoteObservationSource(
+            paths: .testFixture,
+            executor: executor,
+            restartDelays: [.zero, .zero],
+            initialOutputTimeout: .seconds(1)
+        )
+        var states: [NowPlayingState] = []
+
+        for await state in source.states() {
+            states.append(state)
+        }
+
+        #expect(states.map(\.status) == [.unavailable])
+        #expect(executor.streamInvocationCount == 3)
+    }
 }
 
 private final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
     @unchecked Sendable
 {
     let capabilityResult: Result<Int32, MediaRemoteProcessError>
-    let streamLines: [Data]
+    private let lock = NSLock()
+    private let streamResults: [Result<[Data], MediaRemoteProcessError>]
+    private var nextStreamIndex = 0
+
+    var streamInvocationCount: Int {
+        lock.withLock { nextStreamIndex }
+    }
 
     init(
         capabilityResult: Result<Int32, MediaRemoteProcessError>,
         streamLines: [Data]
     ) {
         self.capabilityResult = capabilityResult
-        self.streamLines = streamLines
+        streamResults = [.success(streamLines)]
+    }
+
+    init(
+        capabilityResult: Result<Int32, MediaRemoteProcessError>,
+        streamResults: [Result<[Data], MediaRemoteProcessError>]
+    ) {
+        self.capabilityResult = capabilityResult
+        self.streamResults = streamResults
     }
 
     func run(arguments: [String], timeout: Duration) async
@@ -93,13 +194,25 @@ private final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
         capabilityResult
     }
 
-    func lines(arguments: [String]) -> AsyncThrowingStream<Data, any Error> {
-        let streamLines = streamLines
+    func lines(arguments: [String], initialOutputTimeout: Duration)
+        -> AsyncThrowingStream<Data, any Error>
+    {
+        let result = lock.withLock {
+            let result = streamResults[min(nextStreamIndex, streamResults.count - 1)]
+            nextStreamIndex += 1
+            return result
+        }
+
         return AsyncThrowingStream { continuation in
-            for line in streamLines {
-                continuation.yield(line)
+            switch result {
+            case .success(let lines):
+                for line in lines {
+                    continuation.yield(line)
+                }
+                continuation.finish()
+            case .failure(let error):
+                continuation.finish(throwing: error)
             }
-            continuation.finish()
         }
     }
 }
@@ -107,6 +220,7 @@ private final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
 extension MediaRemoteAdapterPaths {
     fileprivate static let testFixture = MediaRemoteAdapterPaths(
         perlExecutable: URL(fileURLWithPath: "/usr/bin/true"),
+        supervisor: URL(fileURLWithPath: "/usr/bin/true"),
         script: URL(fileURLWithPath: "/usr/bin/true"),
         framework: URL(fileURLWithPath: "/System/Library/Frameworks/Foundation.framework"),
         testClient: URL(fileURLWithPath: "/usr/bin/true")

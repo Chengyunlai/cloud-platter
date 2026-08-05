@@ -1,0 +1,3 @@
+{"type":"data","diff":false,"payload":{"bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲一","artist":"匿名艺人","album":"匿名专辑","duration":180,"elapsedTime":8}}
+{"type":"data","diff":true,"payload":{"playing":false,"elapsedTime":12}}
+{"type":"data","diff":true,"payload":{"playing":true,"title":"匿名歌曲二","elapsedTime":0}}

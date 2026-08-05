@@ -47,10 +47,12 @@ ditto \
     "$adapter_resources_dir/MediaRemoteAdapter.framework"
 cp "$adapter_build_dir/MediaRemoteAdapterTestClient" "$adapter_resources_dir/"
 cp "$project_root/Vendor/mediaremote-adapter/bin/mediaremote-adapter.pl" "$adapter_resources_dir/"
+cp "$project_root/scripts/mediaremote-supervisor.sh" "$adapter_resources_dir/"
 cp "$project_root/Vendor/mediaremote-adapter/LICENSE" "$adapter_resources_dir/LICENSE.txt"
 cp "$project_root/THIRD_PARTY_NOTICES.md" "$resources_dir/"
 
 /usr/bin/perl -c "$adapter_resources_dir/mediaremote-adapter.pl" >/dev/null
+bash -n "$adapter_resources_dir/mediaremote-supervisor.sh"
 
 # 开源构建使用 ad-hoc 签名；Release 页面必须保留 Gatekeeper 提示。
 codesign --force --deep --sign - "$app_dir"
