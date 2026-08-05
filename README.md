@@ -51,6 +51,7 @@ make package VERSION=0.1.0-dev
 - [领域上下文](CONTEXT.md)
 - [架构决策](docs/adr/README.md)
 - [播放状态源技术调研](docs/research/now-playing-data-source-2026-08.md)
+- [macOS 26.3 / 网易云音乐 3.1.9 兼容矩阵](docs/compatibility/macos-26-netease-3.1.9.md)
 - [第三方软件声明](THIRD_PARTY_NOTICES.md)
 - [安全政策](SECURITY.md)
 

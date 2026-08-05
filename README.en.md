@@ -45,6 +45,7 @@ make package VERSION=0.1.0-dev
 - [Domain context (Chinese)](CONTEXT.md)
 - [Architecture decisions (Chinese)](docs/adr/README.md)
 - [Playback-source research (Chinese)](docs/research/now-playing-data-source-2026-08.md)
+- [macOS 26.3 / NetEase Cloud Music 3.1.9 compatibility matrix (Chinese)](docs/compatibility/macos-26-netease-3.1.9.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 - [Security policy (Chinese)](SECURITY.md)
 
