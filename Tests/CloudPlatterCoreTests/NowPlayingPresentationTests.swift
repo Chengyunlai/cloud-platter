@@ -1,5 +1,4 @@
 import CloudPlatterCore
-import Combine
 import Foundation
 import Testing
 
@@ -22,15 +21,15 @@ struct NowPlayingPresentationTests {
         let playbackModel = PlaybackModel(
             source: RecordedPlaybackObservationSource(recordedStates: states)
         )
-        var observedStates = playbackModel.$nowPlayingState.values.makeAsyncIterator()
         var decoder = MediaRemoteStreamDecoder()
         var presentations: [NowPlayingPresentation] = []
 
-        _ = await observedStates.next()
         for line in fixture.split(whereSeparator: \.isNewline) {
             let state = try decoder.decode(line: Data(line.utf8))
             continuation.yield(state)
-            let observedState = try #require(await observedStates.next())
+            let observedState = try #require(
+                await waitForState(state, from: playbackModel)
+            )
             presentations.append(NowPlayingPresentation(state: observedState))
         }
         continuation.finish()
@@ -71,6 +70,20 @@ struct NowPlayingPresentationTests {
         #expect(presentation.artistText == "未知艺人")
         #expect(presentation.albumText == "未知专辑")
     }
+}
+
+@MainActor
+private func waitForState(
+    _ expectedState: NowPlayingState,
+    from playbackModel: PlaybackModel
+) async -> NowPlayingState? {
+    for _ in 0..<100 {
+        if playbackModel.nowPlayingState == expectedState {
+            return playbackModel.nowPlayingState
+        }
+        try? await Task.sleep(for: .milliseconds(10))
+    }
+    return nil
 }
 
 private struct RecordedPlaybackObservationSource: PlaybackObservationSource {
