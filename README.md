@@ -41,7 +41,9 @@ macOS“隐私与安全性”设置中手动允许打开。详细技术边界见
 项目以中文作为默认文档语言，英文文档作为同步翻译。代码标识符使用英文，代码注释使用中文。完整规范请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ```bash
+git submodule update --init --recursive
 make check
+make adapter
 make package VERSION=0.1.0-dev
 ```
 
@@ -49,6 +51,7 @@ make package VERSION=0.1.0-dev
 - [领域上下文](CONTEXT.md)
 - [架构决策](docs/adr/README.md)
 - [播放状态源技术调研](docs/research/now-playing-data-source-2026-08.md)
+- [第三方软件声明](THIRD_PARTY_NOTICES.md)
 - [安全政策](SECURITY.md)
 
 ## 独立项目声明

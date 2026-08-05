@@ -21,6 +21,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          submodules: recursive
 
       - name: 验证发布来源
         run: |

@@ -11,8 +11,12 @@ shasum -a 256 -c CloudPlatter-*.zip.sha256
 ## 已验证环境
 
 - macOS：CI 在 GitHub `macos-15` Runner 完成构建、测试和 Universal 打包。
-- 网易云音乐：动态 MediaRemote 兼容性验证尚未完成，请关注 [#3](https://github.com/Chengyunlai/cloud-platter/issues/3)。
+- 动态兼容性：已在 macOS 26.3、网易云音乐 3.1.9 上完成标题、艺人、专辑、封面、进度、
+  播放状态和实时切歌验证。
 
 ## 已知兼容性
 
-CloudPlatter 依赖未公开的 macOS MediaRemote 接口。系统或网易云音乐升级后，当前播放信息可能暂时不可用；应用应进入安全降级状态，而不是要求你关闭系统安全功能。
+CloudPlatter 会启动系统 `/usr/bin/perl` 子进程，并由它加载应用附带的 BSD-3-Clause
+MediaRemote Adapter。该路径依赖未公开的 macOS MediaRemote 行为，系统或网易云音乐升级后
+可能失效；应用会先完成能力测试并安全降级，不会要求你关闭系统安全功能。安装包内包含完整
+第三方软件声明。

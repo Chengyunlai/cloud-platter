@@ -35,7 +35,9 @@ The default observation path does not require Accessibility or Screen & System A
 Chinese is the project's default documentation language, with English maintained as a synchronized translation. Code identifiers are written in English, while code comments are written in Chinese. See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete conventions.
 
 ```bash
+git submodule update --init --recursive
 make check
+make adapter
 make package VERSION=0.1.0-dev
 ```
 
@@ -43,6 +45,7 @@ make package VERSION=0.1.0-dev
 - [Domain context (Chinese)](CONTEXT.md)
 - [Architecture decisions (Chinese)](docs/adr/README.md)
 - [Playback-source research (Chinese)](docs/research/now-playing-data-source-2026-08.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
 - [Security policy (Chinese)](SECURITY.md)
 
 ## Project independence

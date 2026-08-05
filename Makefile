@@ -1,6 +1,9 @@
-.PHONY: build test lint format check package clean
+.PHONY: adapter build test lint format check package clean
 
 VERSION ?= 0.0.0-dev
+
+adapter:
+	./scripts/build-mediaremote-adapter.sh
 
 build:
 	swift build

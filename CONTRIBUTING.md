@@ -13,7 +13,11 @@
 
 - macOS 14 或更新版本。
 - 完整 Xcode 及其包含的 Swift 工具链；只有 Command Line Tools 时可以构建应用，但可能缺少 Swift Testing 运行库。
+- CMake，用于从固定提交构建随 App 分发的 Universal MediaRemote Adapter。
+- 克隆仓库时使用 `git clone --recurse-submodules`；已有工作区运行
+  `git submodule update --init --recursive` 补齐第三方源码。
 - 首次克隆后运行 `make check` 验证格式、构建和测试。
+- 运行 `make adapter` 可单独构建并验证隔离 helper。
 - 运行 `make package VERSION=0.1.0-dev` 可在 `dist/` 生成 ad-hoc 签名的 Universal 应用 ZIP 和 SHA-256。
 
 ## 1. 语言规范
@@ -54,6 +58,7 @@ guard let nowPlayingInfo else {
 - 首版保持只读：不注入网易云音乐进程、不抓取 Cookie、不模拟登录、不调用社区逆向 API。
 - 私有接口必须使用运行时能力检测；接口不可用、字段缺失或格式变化时应安全降级。
 - 引入第三方依赖前，应说明必要性、许可证、包体和长期维护成本。
+- `Vendor/` 中固定提交的第三方源码保留上游原始注释与格式；项目自行新增或修改的代码仍遵循中文注释规范。
 
 ## 4. 隐私与日志
 
