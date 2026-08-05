@@ -136,7 +136,6 @@ private actor FallbackPlaybackStateSelector {
             cancelFallbackFetch()
             yieldIfChanged(state)
         case .idle, .unavailable:
-            primaryFallbackState = state
             isFallbackNeeded = true
             resumeFallbackWaiters(with: true)
         }
