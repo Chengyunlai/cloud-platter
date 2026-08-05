@@ -10,7 +10,7 @@ You can keep using the player you already know. CloudPlatter only reads local No
 
 ## Status
 
-The project is currently in research and prototyping. NetEase Cloud Music has been confirmed to publish its current media to macOS Control Center, where it can be read through public accessibility and screen-capture capabilities. Track changes, app restarts, and additional content types still require compatibility validation.
+The project is currently in research and prototyping. Real-time title, artist, album, artwork, playback state, and track-change updates have been verified on macOS 26.3 with NetEase Cloud Music 3.1.9. Additional content types, app restarts, and system versions still require compatibility validation.
 
 ## Planned MVP
 
@@ -24,11 +24,11 @@ The project is currently in research and prototyping. NetEase Cloud Music has be
 
 - Swift and AppKit for the macOS application and desktop window
 - SwiftUI and Core Animation for settings and the turntable scene
-- A replaceable observation source that reads the system media card through macOS Accessibility
-- In-memory artwork capture through ScreenCaptureKit when the user grants permission; system screenshots are not saved
+- A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper
+- Source filtering at the application boundary before private fields are converted into the project's own playback state
 - GitHub Releases for downloadable builds
 
-CloudPlatter requires Accessibility permission. Showing the real artwork also requires Screen & System Audio Recording permission. The app does not save system screenshots or upload listening history. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized.
+The default observation path does not require Accessibility or Screen & System Audio Recording permission, and it does not upload listening history. It relies on undocumented MediaRemote behavior and the `/usr/bin/perl` currently bundled with macOS, so a future system update may break it; the app performs a capability check and degrades safely when unavailable. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized. See [ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md) for the technical boundary.
 
 ## Development and contributing
 
@@ -42,6 +42,7 @@ make package VERSION=0.1.0-dev
 - [Project roadmap (Chinese)](docs/ROADMAP.md)
 - [Domain context (Chinese)](CONTEXT.md)
 - [Architecture decisions (Chinese)](docs/adr/README.md)
+- [Playback-source research (Chinese)](docs/research/now-playing-data-source-2026-08.md)
 - [Security policy (Chinese)](SECURITY.md)
 
 ## Project independence

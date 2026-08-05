@@ -10,7 +10,8 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 | --- | --- |
 | 播放来源（Playback Source） | 发布当前媒体状态的应用。MVP 只识别 bundle id 为 `com.netease.163music` 的网易云音乐。 |
 | 正在播放状态（Now Playing State） | CloudPlatter 内部使用的规范化状态，包含来源、标题、艺人、专辑、封面、时长、进度和播放状态。 |
-| 播放状态源（Playback Observation Source） | 从 macOS 系统界面或运行时能力读取媒体状态，并转换为规范化状态的可替换边界。MVP 优先使用控制中心辅助功能树。 |
+| 播放状态源（Playback Observation Source） | 从隔离的 MediaRemote helper 读取媒体状态，并转换为规范化状态的可替换边界。 |
+| MediaRemote Adapter | 由系统 `/usr/bin/perl` 子进程动态加载的隔离 helper，向主应用输出 JSON 快照和实时变化。 |
 | 系统媒体卡片（System Media Card） | macOS 控制中心展示当前歌曲、艺人、封面和播放按钮的系统界面。 |
 | 空闲状态（Idle State） | 没有受支持的播放来源、没有当前媒体，或适配器不可用时的安全降级状态。 |
 | 桌面场景（Desktop Scene） | 显示封面、唱片、唱臂和播放动画的非播放器窗口。 |
@@ -25,18 +26,20 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 
 ## 产品边界
 
-- MVP 只读取网易云音乐已经发布到 macOS 系统媒体卡片的本机信息。
+- MVP 只读取网易云音乐已经发布给 macOS Now Playing 的本机信息。
 - MVP 不提供播放控制、歌词、账号、歌单、收藏或推荐能力。
 - 不注入其他进程，不抓取 Cookie，不模拟登录，不调用社区逆向 API。
-- 默认数据源使用 macOS Accessibility 读取系统媒体卡片；封面启用时使用
-  ScreenCaptureKit 在内存中裁剪，不保存系统截图。
-- 应用必须在辅助功能或屏幕录制权限缺失、系统媒体卡片不可用、字段结构变化时安全降级。
-- MediaRemote 只允许用于脱敏能力探测或来源识别，不作为普通开源构建的完整元数据来源。
+- 默认数据源由系统 `/usr/bin/perl` 子进程加载应用附带的 MediaRemote helper；主应用不声明
+  Apple 私有 entitlement，也不向网易云音乐进程注入代码。
+- MVP 只使用 helper 的只读能力；上游提供的播放控制不属于产品边界。
+- 应用必须在 `/usr/bin/perl` 缺失、capability test 失败、字段结构变化、helper 退出或来源切换时
+  安全降级，不能要求用户关闭系统安全机制。
+- Accessibility 与 ScreenCaptureKit 只保留为开发诊断或未来由用户主动开启的备用能力。
 - UI 和渲染层只消费规范化的 Now Playing State，不理解私有字段。
 
 ## 隐私不变量
 
 - 默认不上传或持久化用户的收听历史。
 - 默认日志不包含完整曲名、艺人、封面 URL、账号标识或本地路径。
-- 屏幕捕获只允许针对系统媒体卡片的封面范围，图像只保存在内存中。
+- 封面只在内存中解码和渲染，不保存到磁盘。
 - 新增网络请求、遥测或敏感权限前必须更新隐私说明并经过明确评审。

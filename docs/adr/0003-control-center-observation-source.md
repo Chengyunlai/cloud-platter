@@ -1,8 +1,9 @@
 # ADR-0003：使用系统媒体卡片作为 MVP 播放状态源
 
-- 状态：已接受
+- 状态：已替代
 - 日期：2026-08-04
 - 替代：ADR-0001 中由 MediaRemote 读取完整元数据的部分
+- 被替代：[ADR-0004](0004-isolated-mediaremote-adapter.md)
 
 ## 背景
 

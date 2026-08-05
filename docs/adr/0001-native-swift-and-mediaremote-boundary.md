@@ -2,8 +2,8 @@
 
 - 状态：已接受
 - 日期：2026-08-04
-- 修订：完整元数据来源部分已由 [ADR-0003](0003-control-center-observation-source.md)
-  替代；原生 Swift 与可替换边界决策继续有效。
+- 修订：完整元数据来源先后由 [ADR-0003](0003-control-center-observation-source.md) 和
+  [ADR-0004](0004-isolated-mediaremote-adapter.md) 替代；原生 Swift 与可替换边界决策继续有效。
 
 ## 背景
 

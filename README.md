@@ -10,9 +10,9 @@
 
 ## 项目状态
 
-目前处于技术验证和原型阶段。已确认网易云音乐会把当前媒体展示在 macOS 控制中心，
-并能通过公开的系统辅助功能与屏幕捕获能力读取；仍在验证切歌、客户端重启和不同内容
-类型下的稳定性。
+目前处于技术验证和原型阶段。已在 macOS 26.3 与网易云音乐 3.1.9 上验证实时读取标题、
+艺人、专辑、封面、播放状态和切歌更新；仍需完成更多内容类型、客户端重启和系统版本的
+兼容性验证。
 
 ## MVP 规划
 
@@ -26,13 +26,15 @@
 
 - 使用 Swift 和 AppKit 构建 macOS 应用与桌面窗口
 - 使用 SwiftUI 和 Core Animation 构建设置界面与唱机动画
-- 使用可替换的播放状态源，通过 macOS Accessibility 读取系统媒体卡片
-- 在用户允许时使用 ScreenCaptureKit 在内存中取得封面，不保存系统截图
+- 使用可替换的播放状态源，由系统 `/usr/bin/perl` 子进程加载隔离的 MediaRemote helper
+- 在应用边界过滤网易云音乐来源，并把私有字段转换为项目自己的播放状态
 - 通过 GitHub Releases 提供可下载的安装包
 
-CloudPlatter 需要你授予“辅助功能”权限；显示真实封面时还需要“屏幕与系统音频录制”
-权限。应用不会保存系统截图或上传收听记录。未经签名和公证的下载版本，也可能需要你在
-macOS“隐私与安全性”设置中手动允许打开。
+默认读取路径不需要“辅助功能”或“屏幕与系统音频录制”权限，也不会上传收听记录。
+它依赖 Apple 未公开的 MediaRemote 行为和 macOS 当前附带的 `/usr/bin/perl`，可能随系统更新
+失效；应用会先自检并在不兼容时安全降级。未经签名和公证的下载版本，也可能需要你在
+macOS“隐私与安全性”设置中手动允许打开。详细技术边界见
+[ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md)。
 
 ## 开发与贡献
 
@@ -46,6 +48,7 @@ make package VERSION=0.1.0-dev
 - [项目路线图](docs/ROADMAP.md)
 - [领域上下文](CONTEXT.md)
 - [架构决策](docs/adr/README.md)
+- [播放状态源技术调研](docs/research/now-playing-data-source-2026-08.md)
 - [安全政策](SECURITY.md)
 
 ## 独立项目声明
