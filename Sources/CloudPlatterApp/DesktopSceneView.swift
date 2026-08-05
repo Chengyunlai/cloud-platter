@@ -8,6 +8,7 @@ struct DesktopSceneView: View {
     let isSessionActive: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var rotationState = RecordRotationState()
 
     private var presentation: DesktopScenePresentation {
         DesktopScenePresentation(state: nowPlayingState)
@@ -31,6 +32,12 @@ struct DesktopSceneView: View {
         .frame(width: 400, height: 330)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("CloudPlatter 桌面唱片")
+        .onAppear {
+            updateRotation(isActive: animationPolicy.shouldAnimate)
+        }
+        .onChange(of: animationPolicy.shouldAnimate) { _, isActive in
+            updateRotation(isActive: isActive)
+        }
     }
 
     private var recordScene: some View {
@@ -93,11 +100,18 @@ struct DesktopSceneView: View {
     }
 
     private func rotationAngle(at date: Date) -> Angle {
-        guard animationPolicy.shouldAnimate else {
-            return .zero
+        .degrees(rotationState.angle(at: date))
+    }
+
+    private func updateRotation(isActive: Bool) {
+        let now = Date()
+        if isActive {
+            rotationState.start(at: now)
+        } else {
+            withAnimation(.easeOut(duration: 0.35)) {
+                rotationState.stop(at: now)
+            }
         }
-        let seconds = date.timeIntervalSinceReferenceDate
-        return .degrees(seconds.truncatingRemainder(dividingBy: 20) * 18)
     }
 }
 

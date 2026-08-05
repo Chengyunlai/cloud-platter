@@ -100,4 +100,20 @@ struct DesktopSceneTests {
             ).shouldAnimate
         )
     }
+
+    @Test("唱片暂停后保留停止角度且不再刷新")
+    func pausedRecordKeepsItsStoppingAngle() {
+        let start = Date(timeIntervalSinceReferenceDate: 100)
+        var rotation = RecordRotationState()
+
+        rotation.start(at: start)
+        #expect(rotation.angle(at: start.addingTimeInterval(1)) == 18)
+
+        rotation.stop(at: start.addingTimeInterval(1))
+        let stoppedAngle = rotation.angle(at: start.addingTimeInterval(2))
+
+        #expect(!rotation.isAnimating)
+        #expect(stoppedAngle == 24)
+        #expect(rotation.angle(at: start.addingTimeInterval(60)) == stoppedAngle)
+    }
 }
