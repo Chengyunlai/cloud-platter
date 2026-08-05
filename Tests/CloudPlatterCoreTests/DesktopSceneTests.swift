@@ -1,6 +1,7 @@
 import AppKit
 import CloudPlatterCore
 import Foundation
+import SwiftUI
 import Testing
 
 @testable import CloudPlatterApp
@@ -54,9 +55,10 @@ struct DesktopSceneTests {
         #expect(!unavailable.isRecordSpinning)
     }
 
-    @Test("全屏构图在 16 比 10 与超宽屏内保持主要物件边界")
+    @Test("全屏构图在 16 比 9、16 比 10 与超宽屏内保持主要物件边界")
     func fullScreenLayoutKeepsPrimaryObjectsInsideCanvas() {
         for canvasSize in [
+            CGSize(width: 1_280, height: 720),
             CGSize(width: 1_440, height: 900),
             CGSize(width: 1_728, height: 720),
         ] {
@@ -67,6 +69,38 @@ struct DesktopSceneTests {
             #expect(canvas.contains(layout.sleeveFrame))
             #expect(canvas.contains(layout.metadataFrame))
             #expect(layout.sleeveFrame.midX < layout.turntableFrame.midX)
+        }
+    }
+
+    @MainActor
+    @Test("全屏场景在一倍与二倍缩放下输出原生像素尺寸")
+    func fullScreenSceneRendersAtNativePixelSizes() throws {
+        let canvasSize = CGSize(width: 1_280, height: 720)
+        let state = NowPlayingState(
+            title: "匿名歌曲",
+            artist: "匿名艺人",
+            album: "匿名专辑",
+            status: .paused
+        )
+
+        for expectation in [
+            (scale: CGFloat(1), width: 1_280, height: 720),
+            (scale: CGFloat(2), width: 2_560, height: 1_440),
+        ] {
+            let renderer = ImageRenderer(
+                content: DesktopSceneView(
+                    nowPlayingState: state,
+                    isWindowVisible: true,
+                    isSessionActive: true
+                )
+                .frame(width: canvasSize.width, height: canvasSize.height)
+            )
+            renderer.proposedSize = ProposedViewSize(canvasSize)
+            renderer.scale = expectation.scale
+
+            let image = try #require(renderer.cgImage)
+            #expect(image.width == expectation.width)
+            #expect(image.height == expectation.height)
         }
     }
 

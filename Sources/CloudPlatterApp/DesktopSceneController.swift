@@ -4,9 +4,9 @@ import SwiftUI
 @MainActor
 final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate {
     private let playbackModel: PlaybackModel
-    private let activity = DesktopSceneActivity()
-    private var panels: [CGDirectDisplayID: DesktopScenePanel] = [:]
+    private var panels: [CGDirectDisplayID: DesktopScenePanelEntry] = [:]
     private var isShowing = false
+    private var isSessionActive = true
 
     init(playbackModel: PlaybackModel) {
         self.playbackModel = playbackModel
@@ -24,8 +24,8 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     func show() {
         isShowing = true
         synchronizePanels()
-        for panel in panels.values where !panel.isVisible {
-            panel.orderFrontRegardless()
+        for entry in panels.values where !entry.panel.isVisible {
+            entry.panel.orderFrontRegardless()
         }
         updateWindowVisibility()
     }
@@ -48,21 +48,23 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
         let activeScreenIdentifiers = Set(screens.map { identifier, _ in identifier })
 
         for identifier in Array(panels.keys) where !activeScreenIdentifiers.contains(identifier) {
-            panels.removeValue(forKey: identifier)?.close()
+            panels.removeValue(forKey: identifier)?.panel.close()
         }
 
         for (identifier, screen) in screens {
-            let panel = panels[identifier] ?? makePanel(frame: screen.frame)
-            panel.setFrame(screen.frame, display: panel.isVisible)
-            panels[identifier] = panel
-            if isShowing, !panel.isVisible {
-                panel.orderFrontRegardless()
+            let entry = panels[identifier] ?? makePanel(frame: screen.frame)
+            entry.panel.setFrame(screen.frame, display: entry.panel.isVisible)
+            panels[identifier] = entry
+            if isShowing, !entry.panel.isVisible {
+                entry.panel.orderFrontRegardless()
             }
         }
         updateWindowVisibility()
     }
 
-    private func makePanel(frame: NSRect) -> DesktopScenePanel {
+    private func makePanel(frame: NSRect) -> DesktopScenePanelEntry {
+        let activity = DesktopSceneActivity()
+        activity.isSessionActive = isSessionActive
         let panel = DesktopScenePanel(contentRect: frame)
         panel.delegate = self
         panel.contentView = NSHostingView(
@@ -71,7 +73,7 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
                 activity: activity
             )
         )
-        return panel
+        return DesktopScenePanelEntry(panel: panel, activity: activity)
     }
 
     private func observeSessionActivity() {
@@ -104,17 +106,24 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     }
 
     private func updateWindowVisibility() {
-        activity.isWindowVisible = panels.values.contains {
-            $0.isVisible && $0.occlusionState.contains(.visible)
+        for entry in panels.values {
+            entry.activity.isWindowVisible =
+                entry.panel.isVisible && entry.panel.occlusionState.contains(.visible)
         }
     }
 
     @objc private func sessionDidBecomeInactive() {
-        activity.isSessionActive = false
+        isSessionActive = false
+        for entry in panels.values {
+            entry.activity.isSessionActive = false
+        }
     }
 
     @objc private func sessionDidBecomeActive() {
-        activity.isSessionActive = true
+        isSessionActive = true
+        for entry in panels.values {
+            entry.activity.isSessionActive = true
+        }
         synchronizePanels()
         updateWindowVisibility()
     }
@@ -122,6 +131,12 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     @objc private func screenParametersDidChange() {
         synchronizePanels()
     }
+}
+
+@MainActor
+private struct DesktopScenePanelEntry {
+    let panel: DesktopScenePanel
+    let activity: DesktopSceneActivity
 }
 
 @MainActor

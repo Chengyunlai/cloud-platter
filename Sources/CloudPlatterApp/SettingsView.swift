@@ -12,10 +12,11 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 22) {
             header
             playbackCard
+            desktopSceneNote
             privacyNote
         }
         .padding(26)
-        .frame(width: 520, height: 320, alignment: .topLeading)
+        .frame(width: 520, height: 380, alignment: .topLeading)
     }
 
     private var header: some View {
@@ -60,6 +61,15 @@ struct SettingsView: View {
         }
         .padding(18)
         .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var desktopSceneNote: some View {
+        Label(
+            "全屏场景会铺满每块显示器，并保持点击穿透；桌面图标和其他应用仍可正常使用。",
+            systemImage: "display.2"
+        )
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
 
     private var privacyNote: some View {
