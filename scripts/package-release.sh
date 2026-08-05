@@ -11,6 +11,7 @@ contents_dir="$app_dir/Contents"
 resources_dir="$contents_dir/Resources"
 adapter_build_dir="$project_root/.build/mediaremote-adapter"
 adapter_resources_dir="$resources_dir/MediaRemoteAdapter"
+jxa_resources_dir="$resources_dir/JXAFallback"
 core_number='(0|[1-9][0-9]*)'
 prerelease_identifier='(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)'
 build_identifier='[0-9A-Za-z-]+'
@@ -24,7 +25,11 @@ fi
 bundle_short_version="${version%%[-+]*}"
 
 rm -rf "$dist_dir"
-mkdir -p "$contents_dir/MacOS" "$resources_dir" "$adapter_resources_dir"
+mkdir -p \
+    "$contents_dir/MacOS" \
+    "$resources_dir" \
+    "$adapter_resources_dir" \
+    "$jxa_resources_dir"
 
 # 分别构建两种架构，再合并为一个 Universal 可执行文件。
 arm64_bin_dir="$(swift build --package-path "$project_root" --configuration release --triple arm64-apple-macosx14.0 --product "$app_name" --show-bin-path)"
@@ -49,10 +54,14 @@ cp "$adapter_build_dir/MediaRemoteAdapterTestClient" "$adapter_resources_dir/"
 cp "$project_root/Vendor/mediaremote-adapter/bin/mediaremote-adapter.pl" "$adapter_resources_dir/"
 cp "$project_root/scripts/mediaremote-supervisor.sh" "$adapter_resources_dir/"
 cp "$project_root/Vendor/mediaremote-adapter/LICENSE" "$adapter_resources_dir/LICENSE.txt"
+cp "$project_root/Vendor/yohaku-jxa/netease-now-playing.js" "$jxa_resources_dir/"
+cp "$project_root/Vendor/yohaku-jxa/LICENSE" "$jxa_resources_dir/LICENSE.txt"
 cp "$project_root/THIRD_PARTY_NOTICES.md" "$resources_dir/"
 
 /usr/bin/perl -c "$adapter_resources_dir/mediaremote-adapter.pl" >/dev/null
 bash -n "$adapter_resources_dir/mediaremote-supervisor.sh"
+test -s "$jxa_resources_dir/netease-now-playing.js"
+test -s "$jxa_resources_dir/LICENSE.txt"
 
 # 开源构建使用 ad-hoc 签名；Release 页面必须保留 Gatekeeper 提示。
 codesign --force --deep --sign - "$app_dir"

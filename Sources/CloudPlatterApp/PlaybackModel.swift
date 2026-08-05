@@ -8,7 +8,7 @@ final class PlaybackModel: ObservableObject {
 
     private var observationTask: Task<Void, Never>?
 
-    init(source: any PlaybackObservationSource = MediaRemoteObservationSource()) {
+    init(source: any PlaybackObservationSource = FallbackPlaybackObservationSource()) {
         observationTask = Task { [weak self] in
             for await state in source.states() {
                 guard let self else {

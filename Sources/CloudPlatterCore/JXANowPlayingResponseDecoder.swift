@@ -1,0 +1,71 @@
+import Foundation
+
+/// 把 JXA 定向查询结果转换为规范化播放状态。
+///
+/// 解码器只接受网易云音乐候选项；响应不完整或字段格式变化时返回不可用状态，避免把其他
+/// 播放器或损坏数据送入界面。
+struct JXANowPlayingResponseDecoder: Sendable {
+    private static let supportedBundleIdentifier = "com.netease.163music"
+
+    func decode(_ data: Data) throws -> NowPlayingState {
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        guard response.complete else {
+            return NowPlayingState(status: .unavailable)
+        }
+
+        let candidates = response.candidates.filter {
+            $0.bundleIdentifier == Self.supportedBundleIdentifier
+        }
+        guard
+            let candidate = candidates.first(where: { $0.source == "supported" })
+                ?? candidates.first
+        else {
+            return .idle
+        }
+        guard let title = candidate.title?.nonEmpty,
+            let isPlaying = candidate.playing
+        else {
+            return NowPlayingState(
+                sourceBundleIdentifier: Self.supportedBundleIdentifier,
+                status: .unavailable
+            )
+        }
+
+        return NowPlayingState(
+            sourceBundleIdentifier: Self.supportedBundleIdentifier,
+            title: title,
+            artist: candidate.artist?.nonEmpty,
+            album: candidate.album?.nonEmpty,
+            artwork: candidate.artworkData.flatMap { Data(base64Encoded: $0) },
+            duration: candidate.duration,
+            elapsed: candidate.elapsedTime,
+            playbackRate: candidate.playbackRate ?? (isPlaying ? 1 : 0),
+            status: isPlaying ? .playing : .paused
+        )
+    }
+}
+
+private struct Response: Decodable {
+    let candidates: [Candidate]
+    let complete: Bool
+}
+
+private struct Candidate: Decodable {
+    let source: String
+    let bundleIdentifier: String?
+    let title: String?
+    let artist: String?
+    let album: String?
+    let artworkData: String?
+    let duration: Double?
+    let elapsedTime: Double?
+    let playbackRate: Double?
+    let playing: Bool?
+}
+
+extension String {
+    fileprivate var nonEmpty: String? {
+        let value = trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
+    }
+}

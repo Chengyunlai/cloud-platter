@@ -31,6 +31,8 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 - 不注入其他进程，不抓取 Cookie，不模拟登录，不调用社区逆向 API。
 - 默认数据源由系统 `/usr/bin/perl` 子进程加载应用附带的 MediaRemote helper；主应用不声明
   Apple 私有 entitlement，也不向网易云音乐进程注入代码。
+- 默认事件流返回空闲或不可用状态时，由系统 `/usr/bin/osascript -l JavaScript` 执行只针对
+  `com.netease.163music` 的低频 JXA 查询；事件流恢复后立即停止轮询。
 - MVP 只使用 helper 的只读能力；上游提供的播放控制不属于产品边界。
 - 应用必须在 `/usr/bin/perl` 缺失、capability test 失败、字段结构变化、helper 退出或来源切换时
   安全降级，不能要求用户关闭系统安全机制。

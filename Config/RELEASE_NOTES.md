@@ -17,6 +17,8 @@ shasum -a 256 -c CloudPlatter-*.zip.sha256
 ## 已知兼容性
 
 CloudPlatter 会启动系统 `/usr/bin/perl` 子进程，并由它加载应用附带的 BSD-3-Clause
-MediaRemote Adapter。该路径依赖未公开的 macOS MediaRemote 行为，系统或网易云音乐升级后
-可能失效；应用会先完成能力测试并安全降级，不会要求你关闭系统安全功能。安装包内包含完整
-第三方软件声明。本项目通过 GitHub Releases 直接分发，不通过 Mac App Store。
+MediaRemote Adapter。事件流为空或不可用时，应用会由系统 `/usr/bin/osascript` 按需执行
+MIT 许可的网易云定向 JXA 查询，并在事件流恢复后停止轮询。这些路径依赖未公开的 macOS
+MediaRemote 行为，系统或网易云音乐升级后可能失效；应用会安全降级，不会要求你关闭系统
+安全功能。安装包内包含完整第三方软件声明。本项目通过 GitHub Releases 直接分发，不通过
+Mac App Store。

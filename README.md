@@ -26,12 +26,14 @@
 
 - 使用 Swift 和 AppKit 构建 macOS 应用与桌面窗口
 - 使用 SwiftUI 和 Core Animation 构建设置界面与唱机动画
-- 使用可替换的播放状态源，由系统 `/usr/bin/perl` 子进程加载隔离的 MediaRemote helper
+- 使用可替换的播放状态源，由系统 `/usr/bin/perl` 子进程加载隔离的 MediaRemote helper；
+  事件流为空时由 `/usr/bin/osascript` 按需执行网易云定向查询
 - 在应用边界过滤网易云音乐来源，并把私有字段转换为项目自己的播放状态
 - 通过 GitHub Releases 提供可下载的安装包
 
-默认读取路径不需要“辅助功能”或“屏幕与系统音频录制”权限，也不会上传收听记录。
-它依赖 Apple 未公开的 MediaRemote 行为和 macOS 当前附带的 `/usr/bin/perl`，可能随系统更新
+默认读取路径及按需备用路径都不需要“辅助功能”或“屏幕与系统音频录制”权限，也不会上传
+收听记录。它们依赖 Apple 未公开的 MediaRemote 行为以及 macOS 当前附带的 `/usr/bin/perl`
+和 `/usr/bin/osascript`，可能随系统更新
 失效，不适合通过 Mac App Store 分发；应用会先自检并在不兼容时安全降级。未经签名和公证的下载版本，也可能需要你在
 macOS“隐私与安全性”设置中手动允许打开。详细技术边界见
 [ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md)。

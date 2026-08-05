@@ -24,11 +24,11 @@ The project is currently in research and prototyping. Real-time title, artist, a
 
 - Swift and AppKit for the macOS application and desktop window
 - SwiftUI and Core Animation for settings and the turntable scene
-- A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper
+- A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper, with an on-demand NetEase-targeted `/usr/bin/osascript` query when the event stream is empty
 - Source filtering at the application boundary before private fields are converted into the project's own playback state
 - GitHub Releases for downloadable builds
 
-The default observation path does not require Accessibility or Screen & System Audio Recording permission, and it does not upload listening history. It relies on undocumented MediaRemote behavior and the `/usr/bin/perl` currently bundled with macOS, so a future system update may break it and it is not suitable for Mac App Store distribution; the app performs a capability check and degrades safely when unavailable. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized. See [ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md) for the technical boundary.
+The default observation path and its on-demand fallback do not require Accessibility or Screen & System Audio Recording permission, and they do not upload listening history. They rely on undocumented MediaRemote behavior and the `/usr/bin/perl` and `/usr/bin/osascript` currently bundled with macOS, so a future system update may break them and they are not suitable for Mac App Store distribution; the app performs capability checks and degrades safely when unavailable. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized. See [ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md) for the technical boundary.
 
 ## Development and contributing
 
