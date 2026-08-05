@@ -1,5 +1,6 @@
 import Foundation
 
+/// 定义一次性播放快照读取边界；实现不能建立自己的轮询，也不能泄露原始媒体内容或底层错误。
 protocol NowPlayingSnapshotFetching: Sendable {
     /// 返回一次规范化状态；启动、超时或解析失败必须脱敏为不可用状态。
     func fetch() async -> NowPlayingState
@@ -46,7 +47,7 @@ struct JXANowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable {
             for try await line in executor.lines(
                 arguments: [
                     "-l", "JavaScript", paths.script.path, "--",
-                    "com.netease.163music",
+                    SupportedMediaSource.neteaseMusicBundleIdentifier,
                 ],
                 initialOutputTimeout: requestTimeout
             ) {

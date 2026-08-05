@@ -5,7 +5,7 @@ import Foundation
 /// 解码器只接受网易云音乐候选项；响应不完整或字段格式变化时返回不可用状态，避免把其他
 /// 播放器或损坏数据送入界面。
 struct JXANowPlayingResponseDecoder: Sendable {
-    private static let supportedBundleIdentifier = "com.netease.163music"
+    private static let supportedCandidateSource = "supported"
 
     func decode(_ data: Data) throws -> NowPlayingState {
         let response = try JSONDecoder().decode(Response.self, from: data)
@@ -14,10 +14,12 @@ struct JXANowPlayingResponseDecoder: Sendable {
         }
 
         let candidates = response.candidates.filter {
-            $0.bundleIdentifier == Self.supportedBundleIdentifier
+            $0.bundleIdentifier == SupportedMediaSource.neteaseMusicBundleIdentifier
         }
         guard
-            let candidate = candidates.first(where: { $0.source == "supported" })
+            let candidate = candidates.first(where: {
+                $0.source == Self.supportedCandidateSource
+            })
                 ?? candidates.first
         else {
             return .idle
@@ -26,13 +28,13 @@ struct JXANowPlayingResponseDecoder: Sendable {
             let isPlaying = candidate.playing
         else {
             return NowPlayingState(
-                sourceBundleIdentifier: Self.supportedBundleIdentifier,
+                sourceBundleIdentifier: SupportedMediaSource.neteaseMusicBundleIdentifier,
                 status: .unavailable
             )
         }
 
         return NowPlayingState(
-            sourceBundleIdentifier: Self.supportedBundleIdentifier,
+            sourceBundleIdentifier: SupportedMediaSource.neteaseMusicBundleIdentifier,
             title: title,
             artist: candidate.artist?.nonEmpty,
             album: candidate.album?.nonEmpty,

@@ -52,6 +52,44 @@ struct JXANowPlayingSourceTests {
         #expect(state.status == .paused)
         #expect(state.title == "匿名节目")
     }
+
+    @Test("查询超时时返回脱敏的不可用状态")
+    func timeoutBecomesUnavailable() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let source = JXANowPlayingSnapshotSource(
+            paths: .testFixture,
+            executor: executor,
+            requestTimeout: .milliseconds(10)
+        )
+
+        #expect(await source.fetch().status == .unavailable)
+    }
+
+    @Test("取消查询时结束受控进程流")
+    func cancellationTerminatesProcessStream() async throws {
+        let executor = CancellationRecordingProcessExecutor()
+        let source = JXANowPlayingSnapshotSource(
+            paths: .testFixture,
+            executor: executor,
+            requestTimeout: .seconds(1)
+        )
+        let task = Task {
+            await source.fetch()
+        }
+
+        for _ in 0..<100 where !executor.hasStarted {
+            await Task.yield()
+        }
+        #expect(executor.hasStarted)
+        task.cancel()
+
+        #expect(await task.value.status == .unavailable)
+        try await Task.sleep(for: .milliseconds(20))
+        #expect(executor.wasCancelled)
+    }
 }
 
 extension JXANowPlayingPaths {
@@ -59,4 +97,41 @@ extension JXANowPlayingPaths {
         osascriptExecutable: URL(fileURLWithPath: "/usr/bin/true"),
         script: URL(fileURLWithPath: "/usr/bin/true")
     )
+}
+
+private final class CancellationRecordingProcessExecutor: MediaRemoteProcessExecuting,
+    @unchecked Sendable
+{
+    private let lock = NSLock()
+    private var didStart = false
+    private var didCancel = false
+
+    var hasStarted: Bool {
+        lock.withLock { didStart }
+    }
+
+    var wasCancelled: Bool {
+        lock.withLock { didCancel }
+    }
+
+    func run(arguments: [String], timeout: Duration) async
+        -> Result<Int32, MediaRemoteProcessError>
+    {
+        .success(0)
+    }
+
+    func lines(arguments: [String], initialOutputTimeout: Duration)
+        -> AsyncThrowingStream<Data, any Error>
+    {
+        lock.withLock {
+            didStart = true
+        }
+        return AsyncThrowingStream { continuation in
+            continuation.onTermination = { [weak self] _ in
+                self?.lock.withLock {
+                    self?.didCancel = true
+                }
+            }
+        }
+    }
 }

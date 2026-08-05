@@ -11,8 +11,6 @@ public enum MediaRemoteStreamDecodingError: Error, Equatable, Sendable {
 /// 解码器会在内存中合并上游的增量事件。调用方应为每条独立事件流创建一个实例，
 /// 不能在多个 helper 进程之间复用同一份快照。
 public struct MediaRemoteStreamDecoder: Sendable {
-    private static let supportedBundleIdentifier = "com.netease.163music"
-
     private var snapshot: [String: JSONValue] = [:]
 
     public init() {}
@@ -51,7 +49,9 @@ public struct MediaRemoteStreamDecoder: Sendable {
         }
 
         let sourceBundleIdentifier = snapshot.string(for: "bundleIdentifier")
-        guard sourceBundleIdentifier == Self.supportedBundleIdentifier else {
+        guard
+            sourceBundleIdentifier == SupportedMediaSource.neteaseMusicBundleIdentifier
+        else {
             return .idle
         }
 

@@ -50,7 +50,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CloudPlatter 使用其 JXA MediaRemote 查询脚本作为按需备用通道，并把脚本与本许可证随安装包
 分发。该通道由 Apple 系统 `/usr/bin/osascript` 执行，只定向查询网易云音乐；默认事件流正常
-时不会启动轮询。
+时不会启动轮询。脚本与许可证合计 11,392 字节（未压缩）；固定提交降低上游变更风险，升级前
+需要重新检查许可证、输出协议、兼容性和能耗。
 
 ```text
 MIT License

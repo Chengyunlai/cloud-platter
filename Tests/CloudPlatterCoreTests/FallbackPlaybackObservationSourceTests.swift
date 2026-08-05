@@ -58,6 +58,76 @@ struct FallbackPlaybackObservationSourceTests {
         #expect(states == [.idle])
     }
 
+    @Test("主事件流有效时不启动 JXA")
+    func activePrimaryDoesNotStartFallback() async throws {
+        let primary = ManualPlaybackObservationSource()
+        let fallback = SequenceSnapshotFetcher(states: [.idle])
+        let source = makeSource(primary: primary, fallback: fallback)
+        let activeState = NowPlayingState(title: "匿名歌曲", status: .playing)
+        let stream = source.states()
+        var iterator = stream.makeAsyncIterator()
+
+        primary.send(activeState)
+
+        #expect(await iterator.next() == activeState)
+        try await Task.sleep(for: .milliseconds(20))
+        #expect(fallback.invocationCount == 0)
+        primary.finish()
+    }
+
+    @Test("主事件流恢复时取消正在执行的 JXA 查询")
+    func primaryRecoveryCancelsInFlightFallback() async throws {
+        let primary = ManualPlaybackObservationSource()
+        let fallback = CancellationRecordingSnapshotFetcher()
+        let source = makeSource(primary: primary, fallback: fallback)
+        let activeState = NowPlayingState(title: "匿名歌曲", status: .playing)
+        let stream = source.states()
+        var iterator = stream.makeAsyncIterator()
+
+        primary.send(.idle)
+        await fallback.waitUntilStarted()
+        primary.send(activeState)
+
+        #expect(await iterator.next() == activeState)
+        try await Task.sleep(for: .milliseconds(20))
+        #expect(await fallback.wasCancelled)
+        primary.finish()
+    }
+
+    @Test("JXA 失败后使用失败退避间隔")
+    func fallbackFailureUsesFailureInterval() async {
+        let primary = ManualPlaybackObservationSource()
+        let fallbackState = NowPlayingState(title: "匿名歌曲", status: .playing)
+        let fallback = SequenceSnapshotFetcher(
+            states: [NowPlayingState(status: .unavailable), fallbackState]
+        )
+        let source = makeSource(
+            primary: primary,
+            fallback: fallback,
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .milliseconds(1),
+                idleInterval: .milliseconds(1),
+                failureInterval: .milliseconds(30)
+            )
+        )
+        let clock = ContinuousClock()
+        let startedAt = clock.now
+        let statesTask = Task {
+            var states: [NowPlayingState] = []
+            for await state in source.states().prefix(2) {
+                states.append(state)
+            }
+            return states
+        }
+
+        primary.send(.idle)
+        let states = await statesTask.value
+
+        #expect(states == [.idle, fallbackState])
+        #expect(startedAt.duration(to: clock.now) >= .milliseconds(25))
+        primary.finish()
+    }
+
     private func makeSource(
         primaryStates: [NowPlayingState],
         fallbackStates: [NowPlayingState]
@@ -65,9 +135,27 @@ struct FallbackPlaybackObservationSourceTests {
         FallbackPlaybackObservationSource(
             primary: ImmediatePlaybackObservationSource(states: primaryStates),
             fallback: SequenceSnapshotFetcher(states: fallbackStates),
-            activePollInterval: .milliseconds(1),
-            idlePollInterval: .milliseconds(1),
-            failurePollInterval: .milliseconds(1)
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .milliseconds(1),
+                idleInterval: .milliseconds(1),
+                failureInterval: .milliseconds(1)
+            )
+        )
+    }
+
+    private func makeSource(
+        primary: any PlaybackObservationSource,
+        fallback: any NowPlayingSnapshotFetching,
+        pollingPolicy: FallbackPollingPolicy = FallbackPollingPolicy(
+            activeInterval: .milliseconds(1),
+            idleInterval: .milliseconds(1),
+            failureInterval: .milliseconds(1)
+        )
+    ) -> FallbackPlaybackObservationSource {
+        FallbackPlaybackObservationSource(
+            primary: primary,
+            fallback: fallback,
+            pollingPolicy: pollingPolicy
         )
     }
 }
@@ -96,6 +184,10 @@ private final class SequenceSnapshotFetcher: NowPlayingSnapshotFetching,
     private let states: [NowPlayingState]
     private var index = 0
 
+    var invocationCount: Int {
+        lock.withLock { index }
+    }
+
     init(states: [NowPlayingState]) {
         self.states = states
     }
@@ -105,6 +197,60 @@ private final class SequenceSnapshotFetcher: NowPlayingSnapshotFetching,
             let state = states[min(index, states.count - 1)]
             index += 1
             return state
+        }
+    }
+}
+
+private final class ManualPlaybackObservationSource: PlaybackObservationSource,
+    @unchecked Sendable
+{
+    private let stream: AsyncStream<NowPlayingState>
+    private let continuation: AsyncStream<NowPlayingState>.Continuation
+
+    init() {
+        (stream, continuation) = AsyncStream.makeStream(of: NowPlayingState.self)
+    }
+
+    func states() -> AsyncStream<NowPlayingState> {
+        stream
+    }
+
+    func send(_ state: NowPlayingState) {
+        continuation.yield(state)
+    }
+
+    func finish() {
+        continuation.finish()
+    }
+}
+
+private actor CancellationRecordingSnapshotFetcher: NowPlayingSnapshotFetching {
+    private var startedWaiters: [CheckedContinuation<Void, Never>] = []
+    private var hasStarted = false
+    private(set) var wasCancelled = false
+
+    func fetch() async -> NowPlayingState {
+        hasStarted = true
+        let waiters = startedWaiters
+        startedWaiters.removeAll(keepingCapacity: false)
+        for waiter in waiters {
+            waiter.resume()
+        }
+
+        do {
+            try await Task.sleep(for: .seconds(1))
+        } catch {
+            wasCancelled = true
+        }
+        return NowPlayingState(status: .unavailable)
+    }
+
+    func waitUntilStarted() async {
+        if hasStarted {
+            return
+        }
+        await withCheckedContinuation { continuation in
+            startedWaiters.append(continuation)
         }
     }
 }

@@ -7,41 +7,31 @@ import Foundation
 public struct FallbackPlaybackObservationSource: PlaybackObservationSource, Sendable {
     private let primary: any PlaybackObservationSource
     private let fallback: any NowPlayingSnapshotFetching
-    private let activePollInterval: Duration
-    private let idlePollInterval: Duration
-    private let failurePollInterval: Duration
+    private let pollingPolicy: FallbackPollingPolicy
 
     public init() {
         self.init(
             primary: MediaRemoteObservationSource(),
             fallback: JXANowPlayingSnapshotSource(),
-            activePollInterval: .seconds(1),
-            idlePollInterval: .seconds(2),
-            failurePollInterval: .seconds(4)
+            pollingPolicy: .standard
         )
     }
 
     init(
         primary: any PlaybackObservationSource,
         fallback: any NowPlayingSnapshotFetching,
-        activePollInterval: Duration,
-        idlePollInterval: Duration,
-        failurePollInterval: Duration
+        pollingPolicy: FallbackPollingPolicy
     ) {
         self.primary = primary
         self.fallback = fallback
-        self.activePollInterval = activePollInterval
-        self.idlePollInterval = idlePollInterval
-        self.failurePollInterval = failurePollInterval
+        self.pollingPolicy = pollingPolicy
     }
 
     public func states() -> AsyncStream<NowPlayingState> {
         AsyncStream { continuation in
             let selector = FallbackPlaybackStateSelector(
                 continuation: continuation,
-                activePollInterval: activePollInterval,
-                idlePollInterval: idlePollInterval,
-                failurePollInterval: failurePollInterval
+                pollingPolicy: pollingPolicy
             )
             let primaryTask = Task {
                 for await state in primary.states() {
@@ -58,7 +48,9 @@ public struct FallbackPlaybackObservationSource: PlaybackObservationSource, Send
                         break
                     }
 
-                    let state = await fallback.fetch()
+                    guard let state = await selector.fetchFallback(using: fallback) else {
+                        continue
+                    }
                     let delay = await selector.receiveFallback(state)
                     do {
                         try await Task.sleep(for: delay)
@@ -79,13 +71,26 @@ public struct FallbackPlaybackObservationSource: PlaybackObservationSource, Send
     }
 }
 
+/// 集中定义备用查询在不同结果下的间隔，避免各调用点分别解释轮询策略。
+struct FallbackPollingPolicy: Sendable {
+    let activeInterval: Duration
+    let idleInterval: Duration
+    let failureInterval: Duration
+
+    static let standard = FallbackPollingPolicy(
+        activeInterval: .seconds(1),
+        idleInterval: .seconds(2),
+        failureInterval: .seconds(4)
+    )
+}
+
 private actor FallbackPlaybackStateSelector {
     private let continuation: AsyncStream<NowPlayingState>.Continuation
-    private let activePollInterval: Duration
-    private let idlePollInterval: Duration
-    private let failurePollInterval: Duration
+    private let pollingPolicy: FallbackPollingPolicy
 
     private var fallbackWaiters: [CheckedContinuation<Bool, Never>] = []
+    private var fallbackFetchTask: Task<NowPlayingState, Never>?
+    private var fallbackFetchGeneration = 0
     private var isFallbackNeeded = false
     private var isStopped = false
     private var lastYieldedState: NowPlayingState?
@@ -93,14 +98,10 @@ private actor FallbackPlaybackStateSelector {
 
     init(
         continuation: AsyncStream<NowPlayingState>.Continuation,
-        activePollInterval: Duration,
-        idlePollInterval: Duration,
-        failurePollInterval: Duration
+        pollingPolicy: FallbackPollingPolicy
     ) {
         self.continuation = continuation
-        self.activePollInterval = activePollInterval
-        self.idlePollInterval = idlePollInterval
-        self.failurePollInterval = failurePollInterval
+        self.pollingPolicy = pollingPolicy
     }
 
     func receivePrimary(_ state: NowPlayingState) {
@@ -111,6 +112,7 @@ private actor FallbackPlaybackStateSelector {
         switch state.status {
         case .playing, .paused:
             isFallbackNeeded = false
+            cancelFallbackFetch()
             yieldIfChanged(state)
         case .idle, .unavailable:
             primaryFallbackState = state
@@ -140,6 +142,30 @@ private actor FallbackPlaybackStateSelector {
         }
     }
 
+    func fetchFallback(using fallback: any NowPlayingSnapshotFetching) async
+        -> NowPlayingState?
+    {
+        guard !isStopped, isFallbackNeeded else {
+            return nil
+        }
+
+        fallbackFetchGeneration += 1
+        let generation = fallbackFetchGeneration
+        let task = Task {
+            await fallback.fetch()
+        }
+        fallbackFetchTask = task
+        let state = await task.value
+
+        if generation == fallbackFetchGeneration {
+            fallbackFetchTask = nil
+        }
+        guard !task.isCancelled, !isStopped, isFallbackNeeded else {
+            return nil
+        }
+        return state
+    }
+
     func receiveFallback(_ state: NowPlayingState) -> Duration {
         guard !isStopped, isFallbackNeeded else {
             return .zero
@@ -148,13 +174,13 @@ private actor FallbackPlaybackStateSelector {
         switch state.status {
         case .playing, .paused:
             yieldIfChanged(state)
-            return activePollInterval
+            return pollingPolicy.activeInterval
         case .idle:
             yieldIfChanged(.idle)
-            return idlePollInterval
+            return pollingPolicy.idleInterval
         case .unavailable:
             yieldIfChanged(primaryFallbackState)
-            return failurePollInterval
+            return pollingPolicy.failureInterval
         }
     }
 
@@ -163,6 +189,7 @@ private actor FallbackPlaybackStateSelector {
             return
         }
         isStopped = true
+        cancelFallbackFetch()
         resumeFallbackWaiters(with: false)
     }
 
@@ -180,5 +207,11 @@ private actor FallbackPlaybackStateSelector {
         for waiter in waiters {
             waiter.resume(returning: value)
         }
+    }
+
+    private func cancelFallbackFetch() {
+        fallbackFetchGeneration += 1
+        fallbackFetchTask?.cancel()
+        fallbackFetchTask = nil
     }
 }
