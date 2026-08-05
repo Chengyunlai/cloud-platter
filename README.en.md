@@ -10,7 +10,7 @@ You can keep using the player you already know. CloudPlatter only reads local No
 
 ## Status
 
-The project is currently in research and prototyping. The first milestone is validating reliable, read-only Now Playing metadata from the NetEase Cloud Music macOS client.
+The project is currently in research and prototyping. NetEase Cloud Music has been confirmed to publish its current media to macOS Control Center, where it can be read through public accessibility and screen-capture capabilities. Track changes, app restarts, and additional content types still require compatibility validation.
 
 ## Planned MVP
 
@@ -24,10 +24,11 @@ The project is currently in research and prototyping. The first milestone is val
 
 - Swift and AppKit for the macOS application and desktop window
 - SwiftUI and Core Animation for settings and the turntable scene
-- A small, isolated MediaRemote adapter for read-only Now Playing data
+- A replaceable observation source that reads the system media card through macOS Accessibility
+- In-memory artwork capture through ScreenCaptureKit when the user grants permission; system screenshots are not saved
 - GitHub Releases for downloadable builds
 
-CloudPlatter relies on undocumented macOS media interfaces for cross-application Now Playing data. Those interfaces may change between macOS releases. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized.
+CloudPlatter requires Accessibility permission. Showing the real artwork also requires Screen & System Audio Recording permission. The app does not save system screenshots or upload listening history. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized.
 
 ## Development and contributing
 
