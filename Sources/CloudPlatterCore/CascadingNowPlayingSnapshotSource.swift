@@ -11,7 +11,13 @@ struct CascadingNowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable {
         var didObserveIdleState = false
 
         for source in sources {
+            guard !Task.isCancelled else {
+                return NowPlayingState(status: .unavailable)
+            }
             let state = await source.fetch()
+            guard !Task.isCancelled else {
+                return NowPlayingState(status: .unavailable)
+            }
             switch state.status {
             case .playing, .paused:
                 return state

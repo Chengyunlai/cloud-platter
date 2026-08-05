@@ -1,11 +1,5 @@
 import Foundation
 
-/// 描述实时 MediaRemote 事件无法转换为规范化状态的原因。
-public enum MediaRemoteStreamDecodingError: Error, Equatable, Sendable {
-    case invalidEvent
-    case unsupportedEventType(String)
-}
-
 /// 把 MediaRemote Adapter 的逐行 JSON 事件转换为规范化播放状态。
 ///
 /// 解码器会在内存中合并上游的增量事件。调用方应为每条独立事件流创建一个实例，
@@ -21,11 +15,11 @@ public struct MediaRemoteStreamDecoder: Sendable {
         do {
             event = try JSONDecoder().decode(StreamEvent.self, from: line)
         } catch {
-            throw MediaRemoteStreamDecodingError.invalidEvent
+            throw MediaRemoteDecodingError.invalidPayload
         }
 
         guard event.type == "data" else {
-            throw MediaRemoteStreamDecodingError.unsupportedEventType(event.type)
+            throw MediaRemoteDecodingError.unsupportedEventType(event.type)
         }
 
         if event.diff {
@@ -40,7 +34,7 @@ public struct MediaRemoteStreamDecoder: Sendable {
             snapshot = event.payload.filter { $0.value != .null }
         }
 
-        return makeMediaRemoteNowPlayingState(from: snapshot)
+        return MediaRemoteNowPlayingStateMapper().map(snapshot)
     }
 }
 

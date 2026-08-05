@@ -129,7 +129,7 @@ struct MediaRemoteStreamDecoderTests {
     func unknownEventTypeThrows() {
         var decoder = MediaRemoteStreamDecoder()
 
-        #expect(throws: MediaRemoteStreamDecodingError.unsupportedEventType("notice")) {
+        #expect(throws: MediaRemoteDecodingError.unsupportedEventType("notice")) {
             try decoder.decode(
                 line: Data(#"{"type":"notice","diff":false,"payload":{}}"#.utf8)
             )

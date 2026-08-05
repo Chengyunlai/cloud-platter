@@ -117,17 +117,18 @@ struct DesktopSceneTests {
         #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
     }
 
-    @Test("低分辨率封面不会铺满大尺寸封套")
-    func lowResolutionArtworkUsesCompactPrintedArea() {
-        let layout = DesktopSceneAlbumSleeveLayout(
-            sleeveSize: CGSize(width: 640, height: 640),
-            artworkPixelSize: CGSize(width: 100, height: 100),
-            displayScale: 2
-        )
+    @Test("低分辨率封面按屏幕倍率保持原生像素尺寸")
+    func lowResolutionArtworkUsesNativePixelSize() {
+        for scale in [CGFloat(1), CGFloat(2)] {
+            let layout = DesktopSceneAlbumSleeveLayout(
+                sleeveSize: CGSize(width: 640, height: 640),
+                artworkPixelSize: CGSize(width: 100, height: 100),
+                displayScale: scale
+            )
 
-        #expect(abs(layout.artworkPlateSide - 307.2) < 0.01)
-        #expect(abs(layout.artworkSide - 150) < 0.01)
-        #expect(layout.artworkSide < 640 * 0.25)
+            #expect(abs(layout.artworkPlateSide - 307.2) < 0.01)
+            #expect(abs(layout.artworkSide * scale - 100) < 0.01)
+        }
     }
 
     @MainActor

@@ -119,6 +119,53 @@ struct FallbackPlaybackObservationSourceTests {
         primary.finish()
     }
 
+    @Test("主事件流保持存活但静默时启动备用快照")
+    func silentPrimaryStartsFallbackSnapshot() async {
+        let primary = ManualPlaybackObservationSource()
+        let initialState = NowPlayingState(title: "匿名歌曲一", status: .playing)
+        let recoveredState = NowPlayingState(title: "匿名歌曲二", status: .playing)
+        let fallback = SequenceSnapshotFetcher(states: [recoveredState])
+        let source = makeSource(
+            primary: primary,
+            fallback: fallback,
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .seconds(1),
+                idleInterval: .seconds(1),
+                failureInterval: .seconds(1),
+                primarySilenceTimeout: .milliseconds(10)
+            )
+        )
+        let statesTask = Task {
+            var states: [NowPlayingState] = []
+            for await state in source.states().prefix(2) {
+                states.append(state)
+            }
+            return states
+        }
+
+        primary.send(initialState)
+        let states = await statesTask.value
+
+        #expect(states == [initialState, recoveredState])
+        primary.finish()
+    }
+
+    @Test("级联快照取消后不再启动下一来源")
+    func cancelledCascadeDoesNotStartNextSource() async {
+        let first = CancellationRecordingSnapshotFetcher()
+        let second = SequenceSnapshotFetcher(states: [.idle])
+        let source = CascadingNowPlayingSnapshotSource(sources: [first, second])
+        let task = Task {
+            await source.fetch()
+        }
+
+        await first.waitUntilStarted()
+        task.cancel()
+        _ = await task.value
+
+        #expect(second.invocationCount == 0)
+    }
+
     @Test("主事件流恢复时取消正在执行的 JXA 查询")
     func primaryRecoveryCancelsInFlightFallback() async throws {
         let primary = ManualPlaybackObservationSource()
@@ -151,7 +198,8 @@ struct FallbackPlaybackObservationSourceTests {
             pollingPolicy: FallbackPollingPolicy(
                 activeInterval: .milliseconds(1),
                 idleInterval: .milliseconds(1),
-                failureInterval: .milliseconds(30)
+                failureInterval: .milliseconds(30),
+                primarySilenceTimeout: .seconds(1)
             )
         )
         let clock = ContinuousClock()
@@ -182,7 +230,8 @@ struct FallbackPlaybackObservationSourceTests {
             pollingPolicy: FallbackPollingPolicy(
                 activeInterval: .milliseconds(1),
                 idleInterval: .milliseconds(1),
-                failureInterval: .milliseconds(1)
+                failureInterval: .milliseconds(1),
+                primarySilenceTimeout: .seconds(1)
             )
         )
     }
@@ -193,7 +242,8 @@ struct FallbackPlaybackObservationSourceTests {
         pollingPolicy: FallbackPollingPolicy = FallbackPollingPolicy(
             activeInterval: .milliseconds(1),
             idleInterval: .milliseconds(1),
-            failureInterval: .milliseconds(1)
+            failureInterval: .milliseconds(1),
+            primarySilenceTimeout: .seconds(1)
         )
     ) -> FallbackPlaybackObservationSource {
         FallbackPlaybackObservationSource(

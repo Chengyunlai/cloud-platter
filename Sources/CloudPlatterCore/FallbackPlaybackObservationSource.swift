@@ -1,9 +1,9 @@
 import Foundation
 
-/// 合并默认事件流与按需 JXA 查询，避免瞬时空快照清空正在播放界面。
+/// 合并默认事件流、一次性 MediaRemote 快照与按需 JXA 查询，避免事件流停更后界面失去播放状态。
 ///
-/// 默认事件流正常时不会启动 JXA。主流进入空闲或不可用状态后才开始轮询；主流恢复后立即停用
-/// 备用查询。两条路径都失败时输出主流的安全降级状态，不抛出底层错误或原始媒体字段。
+/// 主流进入空闲、不可用或超过静默阈值后才开始备用轮询；主流恢复后立即停用备用查询。
+/// 三条路径都失败时输出主流的安全降级状态，不抛出底层错误或原始媒体字段。
 public struct FallbackPlaybackObservationSource: PlaybackObservationSource, Sendable {
     private let primary: any PlaybackObservationSource
     private let fallback: any NowPlayingSnapshotFetching
@@ -64,10 +64,21 @@ public struct FallbackPlaybackObservationSource: PlaybackObservationSource, Send
                     }
                 }
             }
+            let primaryWatchdogTask = Task {
+                while !Task.isCancelled {
+                    do {
+                        try await Task.sleep(for: pollingPolicy.primarySilenceTimeout)
+                    } catch {
+                        break
+                    }
+                    await selector.detectPrimarySilence()
+                }
+            }
 
             continuation.onTermination = { _ in
                 primaryTask.cancel()
                 fallbackTask.cancel()
+                primaryWatchdogTask.cancel()
                 Task {
                     await selector.stop()
                 }
@@ -81,11 +92,13 @@ struct FallbackPollingPolicy: Sendable {
     let activeInterval: Duration
     let idleInterval: Duration
     let failureInterval: Duration
+    let primarySilenceTimeout: Duration
 
     static let standard = FallbackPollingPolicy(
         activeInterval: .seconds(1),
         idleInterval: .seconds(2),
-        failureInterval: .seconds(4)
+        failureInterval: .seconds(4),
+        primarySilenceTimeout: .seconds(4)
     )
 }
 
@@ -100,6 +113,7 @@ private actor FallbackPlaybackStateSelector {
     private var isStopped = false
     private var lastYieldedState: NowPlayingState?
     private var primaryFallbackState = NowPlayingState.idle
+    private var lastPrimaryActivityAt = ContinuousClock.now
 
     init(
         continuation: AsyncStream<NowPlayingState>.Continuation,
@@ -114,6 +128,8 @@ private actor FallbackPlaybackStateSelector {
             return
         }
 
+        lastPrimaryActivityAt = ContinuousClock.now
+        primaryFallbackState = state
         switch state.status {
         case .playing, .paused:
             isFallbackNeeded = false
@@ -124,6 +140,19 @@ private actor FallbackPlaybackStateSelector {
             isFallbackNeeded = true
             resumeFallbackWaiters(with: true)
         }
+    }
+
+    func detectPrimarySilence() {
+        guard !isStopped, !isFallbackNeeded else {
+            return
+        }
+        let silenceDuration = lastPrimaryActivityAt.duration(to: ContinuousClock.now)
+        guard silenceDuration >= pollingPolicy.primarySilenceTimeout else {
+            return
+        }
+
+        isFallbackNeeded = true
+        resumeFallbackWaiters(with: true)
     }
 
     func primaryDidFinish() {

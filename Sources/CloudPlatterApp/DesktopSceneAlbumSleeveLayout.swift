@@ -19,7 +19,6 @@ struct DesktopSceneAlbumSleeveLayout: Equatable {
 
         let pixelSide = min(artworkPixelSize.width, artworkPixelSize.height)
         let nativePointSide = pixelSide / max(displayScale, 1)
-        let minimumSide = min(sleeveSize.width, sleeveSize.height) * 0.14
-        artworkSide = min(maximumSide, max(minimumSide, nativePointSide * 3))
+        artworkSide = min(maximumSide, max(nativePointSide, 0))
     }
 }
