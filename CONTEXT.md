@@ -12,7 +12,7 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 | 正在播放状态（Now Playing State） | CloudPlatter 内部使用的规范化状态，包含来源、标题、艺人、专辑、封面、时长、进度和播放状态。 |
 | 播放状态源（Playback Observation Source） | 从隔离的 MediaRemote helper 读取媒体状态，并转换为规范化状态的可替换边界。 |
 | MediaRemote Adapter | 由系统 `/usr/bin/perl` 子进程动态加载的隔离 helper，向主应用输出 JSON 快照和实时变化。 |
-| 备用快照源（Fallback Snapshot Source） | 长驻事件流空闲或不可用时，按顺序执行一次性 MediaRemote 快照与网易云定向 JXA 查询的自愈通道。 |
+| 备用快照源（Fallback Snapshot Source） | 长驻事件流空闲、不可用或静默超时时，按顺序执行一次性 MediaRemote 快照与网易云定向 JXA 查询的自愈通道。 |
 | 系统媒体卡片（System Media Card） | macOS 控制中心展示当前歌曲、艺人、封面和播放按钮的系统界面。 |
 | 空闲状态（Idle State） | 没有受支持的播放来源、没有当前媒体，或适配器不可用时的安全降级状态。 |
 | 桌面场景（Desktop Scene） | 每块显示器上的全屏动态唱机层；位于系统壁纸之上、桌面图标和普通窗口之下，显示封套、唱片、唱臂、元数据和播放动画。 |
@@ -32,9 +32,9 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 - 不注入其他进程，不抓取 Cookie，不模拟登录，不调用社区逆向 API。
 - 默认数据源由系统 `/usr/bin/perl` 子进程加载应用附带的 MediaRemote helper；主应用不声明
   Apple 私有 entitlement，也不向网易云音乐进程注入代码。
-- 默认事件流返回空闲或不可用状态时，先由隔离 helper 执行一次性 `get` 快照；没有得到可展示
-  状态时，再由系统 `/usr/bin/osascript -l JavaScript` 执行只针对 `com.netease.163music` 的低频
-  JXA 查询。事件流恢复后立即停止备用轮询。
+- 默认事件流返回空闲、不可用或连续 4 秒没有事件时，先由隔离 helper 执行一次性 `get`
+  快照；没有得到可展示状态时，再由系统 `/usr/bin/osascript -l JavaScript` 执行只针对
+  `com.netease.163music` 的低频 JXA 查询。事件流恢复后立即停止备用轮询。
 - MVP 只使用 helper 的只读能力；上游提供的播放控制不属于产品边界。
 - 应用必须在 `/usr/bin/perl` 缺失、capability test 失败、字段结构变化、helper 退出或来源切换时
   安全降级，不能要求用户关闭系统安全机制。

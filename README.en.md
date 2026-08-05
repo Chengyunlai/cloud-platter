@@ -24,7 +24,7 @@ The project is currently in research and prototyping. Real-time title, artist, a
 
 - Swift and AppKit for the macOS application and per-display full-screen desktop windows
 - SwiftUI and Core Animation for settings and the turntable scene
-- A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper; an empty event stream first triggers a one-shot MediaRemote snapshot, then an on-demand NetEase-targeted `/usr/bin/osascript` query if needed
+- A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper; an empty, unavailable, or timed-out silent event stream first triggers a one-shot MediaRemote snapshot, then an on-demand NetEase-targeted `/usr/bin/osascript` query if needed
 - Source filtering at the application boundary before private fields are converted into the project's own playback state
 - GitHub Releases for downloadable builds
 

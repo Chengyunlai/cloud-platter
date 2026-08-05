@@ -28,8 +28,8 @@
 - 使用 Swift 和 AppKit 构建 macOS 应用与位于桌面层的多显示器全屏窗口
 - 使用 SwiftUI 和 Core Animation 构建设置界面与唱机动画
 - 使用可替换的播放状态源，由系统 `/usr/bin/perl` 子进程加载隔离的 MediaRemote helper；
-  事件流为空时先执行一次性 MediaRemote 快照，仍无结果时再由 `/usr/bin/osascript` 按需执行
-  网易云定向查询
+  事件流为空、不可用或静默超时后先执行一次性 MediaRemote 快照，仍无结果时再由
+  `/usr/bin/osascript` 按需执行网易云定向查询
 - 在应用边界过滤网易云音乐来源，并把私有字段转换为项目自己的播放状态
 - 通过 GitHub Releases 提供可下载的安装包
 
