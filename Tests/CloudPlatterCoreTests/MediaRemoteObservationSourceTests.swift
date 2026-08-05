@@ -167,9 +167,7 @@ struct MediaRemoteObservationSourceTests {
             paths: .testFixture,
             executor: executor,
             restartDelays: [.zero],
-            initialOutputTimeout: .seconds(1),
-            recoveryCooldown: .zero,
-            maximumRecoveryCycles: 2
+            initialOutputTimeout: .seconds(1)
         )
         var states: [NowPlayingState] = []
 
@@ -231,7 +229,9 @@ struct MediaRemoteObservationSourceTests {
             paths: .testFixture,
             executor: executor,
             restartDelays: [.zero],
-            initialOutputTimeout: .seconds(1)
+            initialOutputTimeout: .seconds(1),
+            recoveryCooldown: .zero,
+            maximumRecoveryCycles: 2
         )
         var recovered = false
 
