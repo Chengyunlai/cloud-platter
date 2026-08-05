@@ -4,7 +4,8 @@
 
 [![CI](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml/badge.svg)](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml)
 
-当你在 Mac 上播放网易云音乐时，CloudPlatter 会在桌面呈现一台随音乐转动的黑胶唱机，让当前歌曲拥有轻量、沉浸的视觉陪伴。
+当你在 Mac 上播放网易云音乐时，CloudPlatter 会把桌面变成一张随音乐变化的全屏胡桃木唱机
+场景，让当前歌曲的封面、黑胶和唱臂成为桌面背景的一部分。
 
 你可以继续使用熟悉的网易云音乐客户端：CloudPlatter 只读取本机 Now Playing 信息，不替代播放器、不要求再次登录音乐账号，也不上传你的收听记录。
 
@@ -18,13 +19,13 @@
 
 - 识别网易云音乐的播放、暂停和切歌状态
 - 显示当前歌曲标题、艺人、专辑和封面
-- 在桌面渲染轻量的黑胶唱机动画
+- 在每块显示器上渲染点击穿透的全屏动态唱机桌面
 - 通过菜单栏控制显示、登录时启动和减少动态效果
 - 全程在本机运行，无需再次登录网易云音乐账号
 
 ## 技术方向
 
-- 使用 Swift 和 AppKit 构建 macOS 应用与桌面窗口
+- 使用 Swift 和 AppKit 构建 macOS 应用与位于桌面层的多显示器全屏窗口
 - 使用 SwiftUI 和 Core Animation 构建设置界面与唱机动画
 - 使用可替换的播放状态源，由系统 `/usr/bin/perl` 子进程加载隔离的 MediaRemote helper；
   事件流为空时由 `/usr/bin/osascript` 按需执行网易云定向查询

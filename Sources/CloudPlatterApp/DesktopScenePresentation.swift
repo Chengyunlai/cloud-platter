@@ -5,6 +5,7 @@ struct DesktopScenePresentation: Equatable {
     let artworkData: Data?
     let titleText: String
     let artistText: String
+    let albumText: String
     let statusText: String
     let isRecordSpinning: Bool
     let usesPlaceholderArtwork: Bool
@@ -17,6 +18,7 @@ struct DesktopScenePresentation: Equatable {
             nowPlayingPresentation.showsMetadata
             ? nowPlayingPresentation.artistText
             : nowPlayingPresentation.guidanceText
+        albumText = nowPlayingPresentation.albumText
         statusText = nowPlayingPresentation.statusText
         isRecordSpinning = state.status == .playing
         usesPlaceholderArtwork = state.artwork == nil

@@ -20,7 +20,7 @@ final class DesktopScenePanel: NSPanel {
         animationBehavior = .none
         collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
 
-        // 桌面层之上一层可保持场景可见，同时不会覆盖普通应用窗口或抢占交互。
+        // 该层级把场景放在系统壁纸之上，同时保持低于桌面图标和普通应用窗口。
         level = NSWindow.Level(
             rawValue: Int(CGWindowLevelForKey(.desktopWindow)) + 1
         )

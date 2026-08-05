@@ -46,11 +46,38 @@ struct DesktopSceneTests {
         )
 
         #expect(playing.artworkData == artwork)
+        #expect(playing.albumText == "未知专辑")
         #expect(!playing.usesPlaceholderArtwork)
         #expect(idle.usesPlaceholderArtwork)
         #expect(!idle.isRecordSpinning)
         #expect(unavailable.usesPlaceholderArtwork)
         #expect(!unavailable.isRecordSpinning)
+    }
+
+    @Test("全屏构图在 16 比 10 与超宽屏内保持主要物件边界")
+    func fullScreenLayoutKeepsPrimaryObjectsInsideCanvas() {
+        for canvasSize in [
+            CGSize(width: 1_440, height: 900),
+            CGSize(width: 1_728, height: 720),
+        ] {
+            let layout = DesktopSceneLayout(canvasSize: canvasSize)
+            let canvas = CGRect(origin: .zero, size: canvasSize)
+
+            #expect(canvas.contains(layout.turntableFrame))
+            #expect(canvas.contains(layout.sleeveFrame))
+            #expect(canvas.contains(layout.metadataFrame))
+            #expect(layout.sleeveFrame.midX < layout.turntableFrame.midX)
+        }
+    }
+
+    @Test("A 方案在 1440 乘 900 屏幕使用约定比例")
+    func walnutLayoutUsesApprovedCompositionAtReferenceSize() {
+        let layout = DesktopSceneLayout(canvasSize: CGSize(width: 1_440, height: 900))
+
+        #expect(abs(layout.turntableFrame.width - 806.4) < 0.01)
+        #expect(abs(layout.turntableFrame.minX - 561.6) < 0.01)
+        #expect(abs(layout.sleeveFrame.width - 446.4) < 0.01)
+        #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
     }
 
     @MainActor

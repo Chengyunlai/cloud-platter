@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml/badge.svg)](https://github.com/Chengyunlai/cloud-platter/actions/workflows/ci.yml)
 
-When you play music in NetEase Cloud Music on your Mac, CloudPlatter places a turntable on your desktop that moves with the music and gives the current track a lightweight, immersive visual presence.
+When you play music in NetEase Cloud Music on your Mac, CloudPlatter turns the desktop into a full-screen walnut turntable scene. The current artwork, vinyl, and tonearm become part of a living desktop background.
 
 You can keep using the player you already know. CloudPlatter only reads local Now Playing information; it does not replace the player, require another music-account login, or upload your listening history.
 
@@ -16,13 +16,13 @@ The project is currently in research and prototyping. Real-time title, artist, a
 
 - Detect play, pause, and track changes from NetEase Cloud Music
 - Show the current title, artist, album, and artwork
-- Render a lightweight animated turntable on the desktop
+- Render a click-through, full-screen animated turntable desktop on every display
 - Provide menu bar controls for visibility, launch at login, and reduced motion
 - Work locally without another NetEase Cloud Music login
 
 ## Technical direction
 
-- Swift and AppKit for the macOS application and desktop window
+- Swift and AppKit for the macOS application and per-display full-screen desktop windows
 - SwiftUI and Core Animation for settings and the turntable scene
 - A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper, with an on-demand NetEase-targeted `/usr/bin/osascript` query when the event stream is empty
 - Source filtering at the application boundary before private fields are converted into the project's own playback state
