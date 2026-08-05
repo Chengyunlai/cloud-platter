@@ -1,11 +1,25 @@
 import AppKit
+import CloudPlatterCore
 import SwiftUI
 
 struct DesktopSceneView: View {
-    @ObservedObject var playbackModel: PlaybackModel
+    let nowPlayingState: NowPlayingState
+    let isWindowVisible: Bool
+    let isSessionActive: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var presentation: DesktopScenePresentation {
-        DesktopScenePresentation(state: playbackModel.nowPlayingState)
+        DesktopScenePresentation(state: nowPlayingState)
+    }
+
+    private var animationPolicy: DesktopSceneAnimationPolicy {
+        DesktopSceneAnimationPolicy(
+            isPlaybackActive: presentation.isRecordSpinning,
+            isWindowVisible: isWindowVisible,
+            isSessionActive: isSessionActive,
+            reduceMotion: reduceMotion
+        )
     }
 
     var body: some View {
@@ -31,7 +45,7 @@ struct DesktopSceneView: View {
             TimelineView(
                 .animation(
                     minimumInterval: 1.0 / 30.0,
-                    paused: !presentation.isRecordSpinning
+                    paused: !animationPolicy.shouldAnimate
                 )
             ) { context in
                 VinylRecordView(
@@ -79,7 +93,7 @@ struct DesktopSceneView: View {
     }
 
     private func rotationAngle(at date: Date) -> Angle {
-        guard presentation.isRecordSpinning else {
+        guard animationPolicy.shouldAnimate else {
             return .zero
         }
         let seconds = date.timeIntervalSinceReferenceDate
@@ -104,15 +118,7 @@ private struct AlbumSleeveView: View {
 
     @ViewBuilder
     private var artwork: some View {
-        if let artworkData,
-            let image = NSImage(data: artworkData)
-        {
-            Image(nsImage: image)
-                .resizable()
-                .scaledToFill()
-        } else {
-            PlaceholderArtworkView()
-        }
+        DesktopArtworkSurface(artworkData: artworkData)
     }
 }
 
@@ -163,6 +169,15 @@ private struct VinylRecordView: View {
 
     @ViewBuilder
     private var centerLabel: some View {
+        DesktopArtworkSurface(artworkData: artworkData)
+    }
+}
+
+private struct DesktopArtworkSurface: View {
+    let artworkData: Data?
+
+    @ViewBuilder
+    var body: some View {
         if let artworkData,
             let image = NSImage(data: artworkData)
         {

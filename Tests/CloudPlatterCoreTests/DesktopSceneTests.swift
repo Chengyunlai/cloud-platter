@@ -64,4 +64,40 @@ struct DesktopSceneTests {
         #expect(!panel.canBecomeMain)
         #expect(panel.ignoresMouseEvents)
     }
+
+    @Test("窗口不可见、会话非活动或减少动态效果时停止刷新")
+    func animationPolicyStopsUnnecessaryRefreshes() {
+        let active = DesktopSceneAnimationPolicy(
+            isPlaybackActive: true,
+            isWindowVisible: true,
+            isSessionActive: true,
+            reduceMotion: false
+        )
+
+        #expect(active.shouldAnimate)
+        #expect(
+            !DesktopSceneAnimationPolicy(
+                isPlaybackActive: true,
+                isWindowVisible: false,
+                isSessionActive: true,
+                reduceMotion: false
+            ).shouldAnimate
+        )
+        #expect(
+            !DesktopSceneAnimationPolicy(
+                isPlaybackActive: true,
+                isWindowVisible: true,
+                isSessionActive: false,
+                reduceMotion: false
+            ).shouldAnimate
+        )
+        #expect(
+            !DesktopSceneAnimationPolicy(
+                isPlaybackActive: true,
+                isWindowVisible: true,
+                isSessionActive: true,
+                reduceMotion: true
+            ).shouldAnimate
+        )
+    }
 }
