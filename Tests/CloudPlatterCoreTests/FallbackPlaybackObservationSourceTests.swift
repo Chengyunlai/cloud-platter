@@ -26,6 +26,50 @@ struct FallbackPlaybackObservationSourceTests {
         #expect(states == [fallbackState])
     }
 
+    @Test("事件流卡空闲时由一次性 MediaRemote 快照恢复播放状态")
+    func mediaRemoteSnapshotRecoversStalledPrimaryStream() async {
+        let recoveredState = NowPlayingState(
+            sourceBundleIdentifier: "com.netease.163music",
+            title: "匿名歌曲",
+            artist: "匿名艺人",
+            status: .playing
+        )
+        let snapshotSource = CascadingNowPlayingSnapshotSource(
+            sources: [
+                SequenceSnapshotFetcher(states: [recoveredState]),
+                SequenceSnapshotFetcher(states: [.idle]),
+            ]
+        )
+        let source = makeSource(
+            primary: ImmediatePlaybackObservationSource(states: [.idle]),
+            fallback: snapshotSource
+        )
+        var states: [NowPlayingState] = []
+
+        for await state in source.states().prefix(1) {
+            states.append(state)
+        }
+
+        #expect(states == [recoveredState])
+    }
+
+    @Test("一次性 MediaRemote 快照空闲时继续使用 JXA")
+    func idleMediaRemoteSnapshotFallsThroughToJXA() async {
+        let jxaState = NowPlayingState(
+            sourceBundleIdentifier: "com.netease.163music",
+            title: "匿名节目",
+            status: .paused
+        )
+        let snapshotSource = CascadingNowPlayingSnapshotSource(
+            sources: [
+                SequenceSnapshotFetcher(states: [.idle]),
+                SequenceSnapshotFetcher(states: [jxaState]),
+            ]
+        )
+
+        #expect(await snapshotSource.fetch() == jxaState)
+    }
+
     @Test("JXA 轮询持续跟随切歌并去除重复状态")
     func fallbackPollingFollowsTrackChanges() async {
         let first = NowPlayingState(title: "第一首", status: .playing)

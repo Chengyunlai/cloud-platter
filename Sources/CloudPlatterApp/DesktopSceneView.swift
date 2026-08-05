@@ -41,16 +41,18 @@ struct DesktopSceneView: View {
                         y: layout.metadataFrame.midY
                     )
 
-                DesktopSceneAlbumSleeveView(artworkData: presentation.artworkData)
-                    .frame(
-                        width: layout.sleeveFrame.width,
-                        height: layout.sleeveFrame.height
-                    )
-                    .rotationEffect(.degrees(-3))
-                    .position(
-                        x: layout.sleeveFrame.midX,
-                        y: layout.sleeveFrame.midY
-                    )
+                DesktopSceneAlbumSleeveView(
+                    content: DesktopSceneAlbumSleeveContent(presentation: presentation)
+                )
+                .frame(
+                    width: layout.sleeveFrame.width,
+                    height: layout.sleeveFrame.height
+                )
+                .rotationEffect(.degrees(-3))
+                .position(
+                    x: layout.sleeveFrame.midX,
+                    y: layout.sleeveFrame.midY
+                )
 
                 DesktopSceneTurntableView(
                     artworkData: presentation.artworkData,

@@ -23,28 +23,38 @@ struct DesktopSceneArtworkSurface: View {
 
 private struct DesktopScenePlaceholderArtworkView: View {
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.08, green: 0.15, blue: 0.23),
-                    Color(red: 0.72, green: 0.25, blue: 0.29),
-                    Color(red: 0.48, green: 0.59, blue: 0.51),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+        GeometryReader { proxy in
+            let side = min(proxy.size.width, proxy.size.height)
 
-            Circle()
-                .fill(Color(red: 1, green: 0.8, blue: 0.34))
-                .frame(width: 54, height: 54)
-                .offset(x: 42, y: -38)
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.08, green: 0.15, blue: 0.23),
+                        Color(red: 0.72, green: 0.25, blue: 0.29),
+                        Color(red: 0.48, green: 0.59, blue: 0.51),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
 
-            Text("夜航")
-                .font(.system(size: 32, weight: .semibold, design: .serif))
-                .tracking(5)
-                .foregroundStyle(.white.opacity(0.94))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(28)
+                Circle()
+                    .fill(Color(red: 1, green: 0.8, blue: 0.34))
+                    .frame(width: side * 0.22, height: side * 0.22)
+                    .offset(x: side * 0.17, y: -side * 0.16)
+
+                Text("夜航")
+                    .font(
+                        .system(
+                            size: max(11, side * 0.105),
+                            weight: .semibold,
+                            design: .serif
+                        )
+                    )
+                    .tracking(max(1, side * 0.016))
+                    .foregroundStyle(.white.opacity(0.94))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(side * 0.09)
+            }
         }
     }
 }

@@ -79,6 +79,7 @@ struct DesktopSceneTests {
             title: "匿名歌曲",
             artist: "匿名艺人",
             album: "匿名专辑",
+            artwork: try makeAnonymousArtwork(pixelSide: 100),
             status: .paused
         )
 
@@ -114,6 +115,19 @@ struct DesktopSceneTests {
         #expect(abs(layout.turntableFrame.minX - 561.6) < 0.01)
         #expect(abs(layout.sleeveFrame.width - 446.4) < 0.01)
         #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
+    }
+
+    @Test("低分辨率封面不会铺满大尺寸封套")
+    func lowResolutionArtworkUsesCompactPrintedArea() {
+        let layout = DesktopSceneAlbumSleeveLayout(
+            sleeveSize: CGSize(width: 640, height: 640),
+            artworkPixelSize: CGSize(width: 100, height: 100),
+            displayScale: 2
+        )
+
+        #expect(abs(layout.artworkPlateSide - 307.2) < 0.01)
+        #expect(abs(layout.artworkSide - 150) < 0.01)
+        #expect(layout.artworkSide < 640 * 0.25)
     }
 
     @MainActor
@@ -178,5 +192,24 @@ struct DesktopSceneTests {
         #expect(!rotation.isAnimating)
         #expect(stoppedAngle == 24)
         #expect(rotation.angle(at: start.addingTimeInterval(60)) == stoppedAngle)
+    }
+
+    @MainActor
+    private func makeAnonymousArtwork(pixelSide: Int) throws -> Data {
+        let bitmap = try #require(
+            NSBitmapImageRep(
+                bitmapDataPlanes: nil,
+                pixelsWide: pixelSide,
+                pixelsHigh: pixelSide,
+                bitsPerSample: 8,
+                samplesPerPixel: 4,
+                hasAlpha: true,
+                isPlanar: false,
+                colorSpaceName: .deviceRGB,
+                bytesPerRow: 0,
+                bitsPerPixel: 0
+            )
+        )
+        return try #require(bitmap.representation(using: .png, properties: [:]))
     }
 }

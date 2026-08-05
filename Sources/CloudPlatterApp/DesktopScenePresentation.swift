@@ -9,6 +9,7 @@ struct DesktopScenePresentation: Equatable {
     let statusText: String
     let isRecordSpinning: Bool
     let usesPlaceholderArtwork: Bool
+    let hasDisplayableMedia: Bool
 
     init(state: NowPlayingState) {
         let nowPlayingPresentation = NowPlayingPresentation(state: state)
@@ -22,5 +23,6 @@ struct DesktopScenePresentation: Equatable {
         statusText = nowPlayingPresentation.statusText
         isRecordSpinning = state.status == .playing
         usesPlaceholderArtwork = state.artwork == nil
+        hasDisplayableMedia = state.status == .playing || state.status == .paused
     }
 }

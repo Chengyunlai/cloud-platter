@@ -12,7 +12,12 @@ public struct FallbackPlaybackObservationSource: PlaybackObservationSource, Send
     public init() {
         self.init(
             primary: MediaRemoteObservationSource(),
-            fallback: JXANowPlayingSnapshotSource(),
+            fallback: CascadingNowPlayingSnapshotSource(
+                sources: [
+                    MediaRemoteNowPlayingSnapshotSource(),
+                    JXANowPlayingSnapshotSource(),
+                ]
+            ),
             pollingPolicy: .standard
         )
     }

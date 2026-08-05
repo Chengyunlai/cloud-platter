@@ -11,7 +11,7 @@ public enum MediaRemoteStreamDecodingError: Error, Equatable, Sendable {
 /// 解码器会在内存中合并上游的增量事件。调用方应为每条独立事件流创建一个实例，
 /// 不能在多个 helper 进程之间复用同一份快照。
 public struct MediaRemoteStreamDecoder: Sendable {
-    private var snapshot: [String: JSONValue] = [:]
+    private var snapshot: [String: MediaRemoteJSONValue] = [:]
 
     public init() {}
 
@@ -40,103 +40,12 @@ public struct MediaRemoteStreamDecoder: Sendable {
             snapshot = event.payload.filter { $0.value != .null }
         }
 
-        return makeState()
-    }
-
-    private func makeState() -> NowPlayingState {
-        guard !snapshot.isEmpty else {
-            return .idle
-        }
-
-        let sourceBundleIdentifier = snapshot.string(for: "bundleIdentifier")
-        guard
-            sourceBundleIdentifier == SupportedMediaSource.neteaseMusicBundleIdentifier
-        else {
-            return .idle
-        }
-
-        guard let title = snapshot.string(for: "title"),
-            let isPlaying = snapshot.bool(for: "playing")
-        else {
-            return NowPlayingState(
-                sourceBundleIdentifier: sourceBundleIdentifier,
-                status: .unavailable
-            )
-        }
-
-        let playbackRate = snapshot.number(for: "playbackRate") ?? (isPlaying ? 1 : 0)
-
-        return NowPlayingState(
-            sourceBundleIdentifier: sourceBundleIdentifier,
-            title: title,
-            artist: snapshot.string(for: "artist"),
-            album: snapshot.string(for: "album"),
-            artwork: snapshot.string(for: "artworkData").flatMap { Data(base64Encoded: $0) },
-            duration: snapshot.number(for: "duration"),
-            elapsed: snapshot.number(for: "elapsedTime"),
-            playbackRate: playbackRate,
-            status: isPlaying ? .playing : .paused
-        )
+        return makeMediaRemoteNowPlayingState(from: snapshot)
     }
 }
 
 private struct StreamEvent: Decodable {
     let type: String
     let diff: Bool
-    let payload: [String: JSONValue]
-}
-
-private enum JSONValue: Decodable, Equatable, Sendable {
-    case string(String)
-    case number(Double)
-    case bool(Bool)
-    case object([String: JSONValue])
-    case array([JSONValue])
-    case null
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-
-        if container.decodeNil() {
-            self = .null
-        } else if let value = try? container.decode(Bool.self) {
-            self = .bool(value)
-        } else if let value = try? container.decode(Double.self) {
-            self = .number(value)
-        } else if let value = try? container.decode(String.self) {
-            self = .string(value)
-        } else if let value = try? container.decode([String: JSONValue].self) {
-            self = .object(value)
-        } else if let value = try? container.decode([JSONValue].self) {
-            self = .array(value)
-        } else {
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "无法识别 JSON 值类型。"
-            )
-        }
-    }
-}
-
-extension Dictionary where Key == String, Value == JSONValue {
-    fileprivate func string(for key: String) -> String? {
-        guard case .string(let value) = self[key] else {
-            return nil
-        }
-        return value
-    }
-
-    fileprivate func bool(for key: String) -> Bool? {
-        guard case .bool(let value) = self[key] else {
-            return nil
-        }
-        return value
-    }
-
-    fileprivate func number(for key: String) -> Double? {
-        guard case .number(let value) = self[key] else {
-            return nil
-        }
-        return value
-    }
+    let payload: [String: MediaRemoteJSONValue]
 }
