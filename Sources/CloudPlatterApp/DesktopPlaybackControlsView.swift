@@ -105,18 +105,27 @@ struct DesktopPlaybackControlsView: View {
 
 private struct DesktopPlaybackControlButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let isPrimary: Bool
 
     func makeBody(configuration: Configuration) -> some View {
+        let animationPolicy = DesktopPlaybackControlAnimationPolicy(
+            isPressed: configuration.isPressed,
+            reduceMotion: reduceMotion
+        )
+
         configuration.label
             .foregroundStyle(.white.opacity(isEnabled ? 0.94 : 0.42))
             .background(
                 .white.opacity(buttonOpacity(isPressed: configuration.isPressed)),
                 in: Circle()
             )
-            .scaleEffect(configuration.isPressed ? 0.93 : 1)
-            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
+            .scaleEffect(animationPolicy.scale)
+            .animation(
+                animationPolicy.animationDuration.map(Animation.easeOut(duration:)),
+                value: configuration.isPressed
+            )
     }
 
     private func buttonOpacity(isPressed: Bool) -> Double {
@@ -124,5 +133,15 @@ private struct DesktopPlaybackControlButtonStyle: ButtonStyle {
             return 0.3
         }
         return isPrimary ? 0.2 : 0.08
+    }
+}
+
+struct DesktopPlaybackControlAnimationPolicy: Equatable {
+    let scale: CGFloat
+    let animationDuration: Double?
+
+    init(isPressed: Bool, reduceMotion: Bool) {
+        scale = isPressed && !reduceMotion ? 0.93 : 1
+        animationDuration = reduceMotion ? nil : 0.16
     }
 }

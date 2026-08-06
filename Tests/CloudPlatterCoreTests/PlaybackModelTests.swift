@@ -13,7 +13,11 @@ struct PlaybackModelTests {
         )
         let model = PlaybackModel(
             source: SingleStatePlaybackSource(
-                state: NowPlayingState(title: "匿名歌曲", status: .playing)
+                state: NowPlayingState(
+                    sourceBundleIdentifier: "com.netease.163music",
+                    title: "匿名歌曲",
+                    status: .playing
+                )
             ),
             controller: controller
         )
@@ -39,6 +43,28 @@ struct PlaybackModelTests {
         await model.performPlaybackControl(.togglePlayPause)
 
         let commands = await controller.commands
+        #expect(commands.isEmpty)
+    }
+
+    @Test("其他播放器处于活动状态时仍禁用网易云控制")
+    func unsupportedActiveMediaDoesNotEnableControls() async {
+        let controller = RecordingPlaybackController(result: .sent)
+        let model = PlaybackModel(
+            source: SingleStatePlaybackSource(
+                state: NowPlayingState(
+                    sourceBundleIdentifier: "com.apple.Music",
+                    title: "匿名歌曲",
+                    status: .playing
+                )
+            ),
+            controller: controller
+        )
+        await Task.yield()
+
+        await model.performPlaybackControl(.previousTrack)
+
+        let commands = await controller.commands
+        #expect(!model.canControlPlayback)
         #expect(commands.isEmpty)
     }
 

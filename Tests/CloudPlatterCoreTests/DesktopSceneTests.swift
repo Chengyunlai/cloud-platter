@@ -196,6 +196,23 @@ struct DesktopSceneTests {
         )
     }
 
+    @Test("减少动态效果时播放按钮按下不缩放")
+    func reduceMotionDisablesPlaybackButtonScale() {
+        let reduced = DesktopPlaybackControlAnimationPolicy(
+            isPressed: true,
+            reduceMotion: true
+        )
+        let standard = DesktopPlaybackControlAnimationPolicy(
+            isPressed: true,
+            reduceMotion: false
+        )
+
+        #expect(reduced.scale == 1)
+        #expect(reduced.animationDuration == nil)
+        #expect(standard.scale == 0.93)
+        #expect(standard.animationDuration == 0.16)
+    }
+
     @Test("唱片暂停后保留停止角度且不再刷新")
     func pausedRecordKeepsItsStoppingAngle() {
         let start = Date(timeIntervalSinceReferenceDate: 100)

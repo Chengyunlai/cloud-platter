@@ -27,7 +27,9 @@ final class PlaybackModel: ObservableObject {
     }
 
     var canControlPlayback: Bool {
-        nowPlayingState.status == .playing || nowPlayingState.status == .paused
+        nowPlayingState.sourceBundleIdentifier
+            == SupportedMediaSource.neteaseMusicBundleIdentifier
+            && (nowPlayingState.status == .playing || nowPlayingState.status == .paused)
     }
 
     func performPlaybackControl(_ command: PlaybackControlCommand) async {

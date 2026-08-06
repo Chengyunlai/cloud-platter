@@ -80,6 +80,22 @@ struct MediaRemotePlaybackControllerTests {
         #expect(await controller.send(.previousTrack) == .failed(.commandRejected))
     }
 
+    @Test("命令进程不可用时不会误报为网易云拒绝")
+    func unavailableCommandProcessReturnsUnavailable() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .failure(.timedOut),
+            streamLines: [
+                Data(
+                    #"{"bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲"}"#
+                        .utf8
+                )
+            ]
+        )
+        let controller = makeController(executor: executor)
+
+        #expect(await controller.send(.nextTrack) == .failed(.unavailable))
+    }
+
     private func makeExecutor() -> StubMediaRemoteProcessExecutor {
         StubMediaRemoteProcessExecutor(
             capabilityResult: .success(0),

@@ -53,8 +53,10 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         switch result {
         case .success(0):
             return .sent
-        case .success, .failure:
+        case .success:
             return .failed(.commandRejected)
+        case .failure:
+            return .failed(.unavailable)
         }
     }
 
@@ -78,11 +80,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
     }
 
     private var hasRequiredResources: Bool {
-        let fileManager = FileManager.default
-        let hasPerl = fileManager.isExecutableFile(atPath: paths.perlExecutable.path)
-        let hasScript = fileManager.fileExists(atPath: paths.script.path)
-        let hasFramework = fileManager.fileExists(atPath: paths.framework.path)
-        return hasPerl && hasScript && hasFramework
+        paths.hasRequiredRuntimeResources()
     }
 }
 

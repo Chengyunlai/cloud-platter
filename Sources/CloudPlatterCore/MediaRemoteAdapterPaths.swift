@@ -21,4 +21,11 @@ struct MediaRemoteAdapterPaths: Equatable, Sendable {
             testClient: adapterRoot.appendingPathComponent("MediaRemoteAdapterTestClient")
         )
     }
+
+    func hasRequiredRuntimeResources(fileManager: FileManager = .default) -> Bool {
+        let hasPerl = fileManager.isExecutableFile(atPath: perlExecutable.path)
+        let hasScript = fileManager.fileExists(atPath: script.path)
+        let hasFramework = fileManager.fileExists(atPath: framework.path)
+        return hasPerl && hasScript && hasFramework
+    }
 }

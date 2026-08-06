@@ -48,9 +48,6 @@ struct MediaRemoteNowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable
     }
 
     private var hasRequiredResources: Bool {
-        let fileManager = FileManager.default
-        return fileManager.isExecutableFile(atPath: paths.perlExecutable.path)
-            && fileManager.fileExists(atPath: paths.script.path)
-            && fileManager.fileExists(atPath: paths.framework.path)
+        paths.hasRequiredRuntimeResources()
     }
 }
