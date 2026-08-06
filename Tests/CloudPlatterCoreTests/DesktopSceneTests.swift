@@ -118,6 +118,24 @@ struct DesktopSceneTests {
         #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
     }
 
+    @Test("唱臂播放时落在音槽并在停止时回到唱片外")
+    func tonearmStylusMovesBetweenGrooveAndRest() {
+        for canvasSize in [
+            CGSize(width: 1_280, height: 720),
+            CGSize(width: 1_440, height: 900),
+            CGSize(width: 1_728, height: 720),
+        ] {
+            let sceneLayout = DesktopSceneLayout(canvasSize: canvasSize)
+            let turntableLayout = DesktopSceneTurntableLayout(size: sceneLayout.turntableFrame.size)
+            let engagedRadius = turntableLayout.stylusRadiusRatio(isEngaged: true)
+            let restingRadius = turntableLayout.stylusRadiusRatio(isEngaged: false)
+
+            #expect(engagedRadius > 0.42)
+            #expect(engagedRadius < 0.9)
+            #expect(restingRadius > 1)
+        }
+    }
+
     @Test("低分辨率封面按屏幕倍率保持原生像素尺寸")
     func lowResolutionArtworkUsesNativePixelSize() {
         for scale in [CGFloat(1), CGFloat(2)] {

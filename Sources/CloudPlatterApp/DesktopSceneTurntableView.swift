@@ -12,7 +12,7 @@ struct DesktopSceneTurntableView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let recordDiameter = min(size.width * 0.58, size.height * 0.88)
+            let layout = DesktopSceneTurntableLayout(size: size)
 
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: max(12, size.width * 0.022), style: .continuous)
@@ -42,14 +42,14 @@ struct DesktopSceneTurntableView: View {
                     )
                 ) { context in
                     DesktopSceneVinylRecordView(artworkData: artworkData)
-                        .frame(width: recordDiameter, height: recordDiameter)
+                        .frame(width: layout.recordDiameter, height: layout.recordDiameter)
                         .rotationEffect(rotationAngle(context.date))
                 }
-                .position(x: size.width * 0.35, y: size.height * 0.5)
+                .position(x: layout.recordCenter.x, y: layout.recordCenter.y)
 
                 DesktopSceneTonearmView(isEngaged: isRecordSpinning, reduceMotion: reduceMotion)
-                    .frame(width: size.width * 0.16, height: size.height * 0.68)
-                    .position(x: size.width * 0.79, y: size.height * 0.42)
+                    .frame(width: layout.tonearmFrame.width, height: layout.tonearmFrame.height)
+                    .position(x: layout.tonearmFrame.midX, y: layout.tonearmFrame.midY)
 
                 Circle()
                     .fill(
