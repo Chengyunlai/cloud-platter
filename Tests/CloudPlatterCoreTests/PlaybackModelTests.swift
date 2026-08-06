@@ -248,7 +248,7 @@ private actor RecordingPlaybackController: PlaybackControlling {
 
     func validateCurrentTarget() async -> PlaybackTargetValidation {
         validationCount += 1
-        targetValidation
+        return targetValidation
     }
 
     func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
