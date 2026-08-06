@@ -97,6 +97,25 @@ struct DesktopSceneLayout: Equatable {
         )
     }
 
+    var metadataBrandFrame: CGRect {
+        CGRect(
+            x: metadataFrame.minX,
+            y: metadataFrame.minY,
+            width: metadataFrame.width,
+            height: ceil(metadataBrandFontSize * 1.2)
+        )
+    }
+
+    var metadataTitleFrame: CGRect {
+        let originY = metadataBrandFrame.maxY + metadataVerticalSpacing
+        return CGRect(
+            x: metadataFrame.minX,
+            y: originY,
+            width: metadataFrame.width,
+            height: max(0, metadataInformationRowMinY - metadataVerticalSpacing - originY)
+        )
+    }
+
     var metadataVerticalSpacing: CGFloat {
         min(7, max(5, canvasSize.height * 0.007))
     }
@@ -117,11 +136,10 @@ struct DesktopSceneLayout: Equatable {
     }
 
     private var metadataInformationRowMinY: CGFloat {
-        let brandLineHeight = ceil(metadataBrandFontSize * 1.2)
         let defaultTitleHeight = ceil(metadataTitleFontSize * 1.2)
         let titleHeight = max(defaultTitleHeight, measuredMetadataTitleHeight)
         return metadataFrame.minY
-            + brandLineHeight
+            + metadataBrandFrame.height
             + titleHeight
             + metadataVerticalSpacing * 2
     }

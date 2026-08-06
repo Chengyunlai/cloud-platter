@@ -88,10 +88,15 @@ struct DesktopSceneView: View {
     }
 
     private func metadata(layout: DesktopSceneLayout) -> some View {
-        VStack(alignment: .leading, spacing: layout.metadataVerticalSpacing) {
+        ZStack(alignment: .topLeading) {
             Text("CloudPlatter")
                 .font(.system(size: layout.metadataBrandFontSize, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.72))
+                .frame(
+                    width: layout.metadataBrandFrame.width,
+                    height: layout.metadataBrandFrame.height,
+                    alignment: .topLeading
+                )
 
             Text(presentation.titleText)
                 .font(
@@ -107,6 +112,14 @@ struct DesktopSceneView: View {
                 .minimumScaleFactor(0.72)
                 .allowsTightening(true)
                 .layoutPriority(1)
+                .frame(
+                    width: layout.metadataTitleFrame.width,
+                    height: layout.metadataTitleFrame.height,
+                    alignment: .topLeading
+                )
+                .offset(
+                    y: layout.metadataTitleFrame.minY - layout.metadataFrame.minY
+                )
 
             Text(presentation.subtitleText)
                 .font(.system(size: layout.metadataSubtitleFontSize))
@@ -117,6 +130,9 @@ struct DesktopSceneView: View {
                     width: layout.metadataSubtitleFrame.width,
                     height: layout.metadataSubtitleFrame.height,
                     alignment: .leading
+                )
+                .offset(
+                    y: layout.metadataSubtitleFrame.minY - layout.metadataFrame.minY
                 )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

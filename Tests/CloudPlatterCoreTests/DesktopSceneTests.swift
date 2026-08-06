@@ -186,6 +186,7 @@ struct DesktopSceneTests {
         )
 
         #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsFrame.minY)
+        #expect(layout.metadataTitleFrame.maxY < layout.metadataSubtitleFrame.minY)
         #expect(layout.playbackControlsFrame.minY - layout.metadataFrame.minY < 150)
         #expect(layout.playbackControlsFrame.maxY < layout.metadataFrame.maxY)
     }
