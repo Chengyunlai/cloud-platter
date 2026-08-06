@@ -2,7 +2,7 @@
 
 ## 产品定义
 
-CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。它观察本机已经存在的播放状态，把当前歌曲呈现为桌面黑胶场景，但不接管音频播放。
+CloudPlatter 是网易云音乐 macOS 客户端的桌面可视化伴侣。它观察本机已经存在的播放状态，把当前歌曲呈现为桌面黑胶场景，并允许用户从桌面主动发送有限的播放控制，但不接管音频播放。
 
 ## 核心术语
 
@@ -11,6 +11,7 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 | 播放来源（Playback Source） | 发布当前媒体状态的应用。MVP 只识别 bundle id 为 `com.netease.163music` 的网易云音乐。 |
 | 正在播放状态（Now Playing State） | CloudPlatter 内部使用的规范化状态，包含来源、标题、艺人、专辑、封面、时长、进度和播放状态。 |
 | 播放状态源（Playback Observation Source） | 从隔离的 MediaRemote helper 读取媒体状态，并转换为规范化状态的可替换边界。 |
+| 播放控制（Playback Control） | 用户从 CloudPlatter 主动发送给当前网易云音乐的上一首、播放/暂停或下一首命令。 |
 | MediaRemote Adapter | 由系统 `/usr/bin/perl` 子进程动态加载的隔离 helper，向主应用输出 JSON 快照和实时变化。 |
 | 备用快照源（Fallback Snapshot Source） | 长驻事件流空闲、不可用或静默超时时，按顺序执行一次性 MediaRemote 快照与网易云定向 JXA 查询的自愈通道。 |
 | 系统媒体卡片（System Media Card） | macOS 控制中心展示当前歌曲、艺人、封面和播放按钮的系统界面。 |
@@ -27,15 +28,17 @@ CloudPlatter 是网易云音乐 macOS 客户端的只读桌面可视化伴侣。
 
 ## 产品边界
 
-- MVP 只读取网易云音乐已经发布给 macOS Now Playing 的本机信息。
-- MVP 不提供播放控制、歌词、账号、歌单、收藏或推荐能力。
+- MVP 读取网易云音乐已经发布给 macOS Now Playing 的本机信息，并只提供上一首、播放/暂停和
+  下一首三种用户主动播放控制。
+- MVP 不提供歌词、账号、歌单、喜欢、收藏、推荐、随机或循环能力。
 - 不注入其他进程，不抓取 Cookie，不模拟登录，不调用社区逆向 API。
 - 默认数据源由系统 `/usr/bin/perl` 子进程加载应用附带的 MediaRemote helper；主应用不声明
   Apple 私有 entitlement，也不向网易云音乐进程注入代码。
 - 默认事件流返回空闲、不可用或连续 4 秒没有事件时，先由隔离 helper 执行一次性 `get`
   快照；没有得到可展示状态时，再由系统 `/usr/bin/osascript -l JavaScript` 执行只针对
   `com.netease.163music` 的低频 JXA 查询。事件流恢复后立即停止备用轮询。
-- MVP 只使用 helper 的只读能力；上游提供的播放控制不属于产品边界。
+- MVP 使用 helper 的只读状态能力和 `previous`、`togglePlayPause`、`next` 三种播放控制；发送
+  前必须再次确认当前来源仍为网易云音乐，不能控制其他播放器。
 - 应用必须在 `/usr/bin/perl` 缺失、capability test 失败、字段结构变化、helper 退出或来源切换时
   安全降级，不能要求用户关闭系统安全机制。
 - Accessibility 与 ScreenCaptureKit 只保留为开发诊断或未来由用户主动开启的备用能力。

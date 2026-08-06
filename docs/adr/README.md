@@ -12,3 +12,4 @@
 - [ADR-0002：使用 Swift Package 构建并发布应用包](0002-swift-package-build-and-release.md)
 - [ADR-0003：使用系统媒体卡片作为 MVP 播放状态源（已替代）](0003-control-center-observation-source.md)
 - [ADR-0004：使用隔离的 MediaRemote Adapter 作为播放状态源](0004-isolated-mediaremote-adapter.md)
+- [ADR-0005：通过独立桌面控制层发送用户主动播放命令](0005-user-initiated-desktop-playback-controls.md)
