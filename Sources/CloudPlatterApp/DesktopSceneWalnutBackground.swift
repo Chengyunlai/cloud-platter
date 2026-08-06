@@ -52,6 +52,7 @@ struct DesktopSceneWalnutBackground: View {
 enum DesktopSceneWalnutTexture {
     static let resourceName = "walnut-desktop-4k"
 
+    @MainActor
     static var image: Image? {
         guard let image = nsImage else {
             return nil
@@ -67,6 +68,7 @@ enum DesktopSceneWalnutTexture {
         return Bundle.module.url(forResource: resourceName, withExtension: "jpg")
     }
 
+    @MainActor
     private static let nsImage: NSImage? = {
         let packagedURL = Bundle.main.url(
             forResource: resourceName,
