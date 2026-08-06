@@ -191,6 +191,27 @@ struct DesktopSceneTests {
         #expect(layout.playbackControlsFrame.maxY < layout.metadataFrame.maxY)
     }
 
+    @Test("两行标题在矮屏幕上不会侵入作者与控制行")
+    func multilineTitleDoesNotOverlapInformationRow() {
+        for canvasSize in [
+            CGSize(width: 1_280, height: 720),
+            CGSize(width: 1_728, height: 720),
+        ] {
+            let layout = DesktopSceneLayout(
+                canvasSize: canvasSize,
+                titleText: "一首足够长并且会自然换成两行显示的匿名歌曲标题",
+                subtitleText: "匿名艺人 · 匿名专辑"
+            )
+
+            #expect(
+                layout.metadataTitleFrame.maxY + layout.metadataVerticalSpacing
+                    <= layout.metadataSubtitleFrame.minY
+            )
+            #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsFrame.minY)
+            #expect(layout.playbackControlsFrame.maxY <= layout.metadataFrame.maxY)
+        }
+    }
+
     @Test("唱臂播放时落在音槽并在停止时回到唱片外")
     func tonearmStylusMovesBetweenGrooveAndRest() {
         for canvasSize in [

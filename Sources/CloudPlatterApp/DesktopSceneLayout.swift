@@ -112,7 +112,7 @@ struct DesktopSceneLayout: Equatable {
             x: metadataFrame.minX,
             y: originY,
             width: metadataFrame.width,
-            height: max(0, metadataInformationRowMinY - metadataVerticalSpacing - originY)
+            height: max(0, metadataSubtitleFrame.minY - metadataVerticalSpacing - originY)
         )
     }
 
