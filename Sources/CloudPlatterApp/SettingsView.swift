@@ -74,7 +74,7 @@ struct SettingsView: View {
 
     private var privacyNote: some View {
         Label(
-            "只读取这台 Mac 上的播放信息，不需要再次登录，也不会上传收听记录。",
+            "播放信息和三种基础控制都留在这台 Mac，不需要再次登录，也不会上传收听记录。",
             systemImage: "lock.shield"
         )
         .font(.caption)

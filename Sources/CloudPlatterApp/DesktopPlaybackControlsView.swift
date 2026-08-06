@@ -36,9 +36,9 @@ struct DesktopPlaybackControlsView: View {
                 .stroke(controlBorderColor, lineWidth: 0.75)
         }
         .opacity(playbackModel.canControlPlayback ? 1 : 0.5)
-        .help(controlHelpText)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("网易云音乐播放控制")
+        .accessibilityHint(controlHelpText)
     }
 
     private func controlButton(
@@ -68,7 +68,8 @@ struct DesktopPlaybackControlsView: View {
         }
         .buttonStyle(DesktopPlaybackControlButtonStyle(isPrimary: isPrimary))
         .disabled(!isEnabled)
-        .help(label)
+        .accessibilityLabel(Text(label))
+        .help(buttonHelpText(label: label))
     }
 
     private var playPauseSymbolName: String {
@@ -95,6 +96,10 @@ struct DesktopPlaybackControlsView: View {
         case .commandRejected:
             "网易云音乐没有接受这次播放控制。"
         }
+    }
+
+    private func buttonHelpText(label: String) -> String {
+        playbackModel.playbackControlFailure == nil ? label : controlHelpText
     }
 }
 

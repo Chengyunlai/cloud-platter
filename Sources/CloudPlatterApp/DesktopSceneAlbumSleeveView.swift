@@ -108,7 +108,7 @@ struct DesktopSceneAlbumSleeveView: View {
 
             Spacer(minLength: 0)
 
-            Text("桌面唱片 · 只读呈现")
+            Text("桌面唱片 · 随乐呈现")
                 .font(.system(size: max(7, size.width * 0.016), weight: .medium))
                 .foregroundStyle(Color.black.opacity(0.52))
                 .lineLimit(1)
