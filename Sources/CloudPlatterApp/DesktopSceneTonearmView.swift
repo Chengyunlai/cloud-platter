@@ -155,11 +155,15 @@ struct DesktopSceneTonearmView: View {
         )
         let cartridgeCenter = CGPoint(
             x: layout.stylusPointBeforeRotation.x,
-            y: layout.stylusPointBeforeRotation.y - size.height * 0.052
+            y: layout.stylusPointBeforeRotation.y - size.height * 0.044
         )
         let cantileverStart = CGPoint(
-            x: cartridgeCenter.x + size.width * 0.018,
-            y: cartridgeCenter.y + size.height * 0.034
+            x: cartridgeCenter.x,
+            y: cartridgeCenter.y + size.height * 0.028
+        )
+        let cantileverBend = CGPoint(
+            x: layout.stylusPointBeforeRotation.x - size.width * 0.004,
+            y: layout.stylusPointBeforeRotation.y - size.height * 0.006
         )
 
         return ZStack(alignment: .topLeading) {
@@ -216,6 +220,7 @@ struct DesktopSceneTonearmView: View {
 
             let cantileverPath = Path { path in
                 path.move(to: cantileverStart)
+                path.addLine(to: cantileverBend)
                 path.addLine(to: layout.stylusPointBeforeRotation)
             }
 
@@ -223,46 +228,47 @@ struct DesktopSceneTonearmView: View {
                 .stroke(
                     .black.opacity(0.68),
                     style: StrokeStyle(
-                        lineWidth: max(2.4, size.width * 0.019),
+                        lineWidth: max(2.6, size.width * 0.02),
                         lineCap: .round
                     )
                 )
 
             cantileverPath.stroke(
                 LinearGradient(
-                    colors: [Color(white: 0.96), Color(white: 0.55)],
+                    colors: [Color(white: 0.88), Color(white: 0.62)],
                     startPoint: .top,
                     endPoint: .bottom
                 ),
                 style: StrokeStyle(
-                    lineWidth: max(1.2, size.width * 0.01),
+                    lineWidth: max(1.35, size.width * 0.011),
                     lineCap: .round
                 )
             )
 
-            Circle()
-                .fill(Color(red: 0.68, green: 0.24, blue: 0.07))
-                .frame(width: max(2.5, size.width * 0.024), height: max(2.5, size.width * 0.024))
+            Capsule()
+                .fill(Color(red: 0.68, green: 0.23, blue: 0.07))
+                .overlay {
+                    Capsule().stroke(.black.opacity(0.5), lineWidth: 0.6)
+                }
+                .frame(width: max(4, size.width * 0.034), height: max(2.5, size.width * 0.021))
                 .position(cantileverStart)
 
             Ellipse()
-                .fill(.black.opacity(0.34))
-                .frame(width: size.width * 0.065, height: max(1.5, size.height * 0.006))
+                .fill(.black.opacity(0.42))
+                .frame(width: size.width * 0.05, height: max(1.2, size.height * 0.004))
                 .position(
                     x: layout.stylusPointBeforeRotation.x + size.width * 0.012,
                     y: layout.stylusPointBeforeRotation.y + size.height * 0.009
                 )
-                .blur(radius: 0.8)
+                .blur(radius: 0.5)
 
             DesktopSceneStylusTipShape()
-                .fill(
-                    LinearGradient(
-                        colors: [Color(white: 0.96), Color(red: 0.42, green: 0.25, blue: 0.08)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(width: max(4, size.width * 0.032), height: max(5, size.width * 0.038))
+                .fill(Color(white: 0.72))
+                .overlay {
+                    DesktopSceneStylusTipShape()
+                        .stroke(Color(white: 0.08), lineWidth: 0.9)
+                }
+                .frame(width: max(3.5, size.width * 0.026), height: max(4.5, size.width * 0.033))
                 .position(layout.stylusPointBeforeRotation)
         }
         .frame(width: size.width, height: size.height)
@@ -336,11 +342,7 @@ struct DesktopSceneTonearmView: View {
 
             Circle()
                 .stroke(
-                    LinearGradient(
-                        colors: [.white.opacity(0.34), .black.opacity(0.48)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
+                    Color.white.opacity(0.09),
                     lineWidth: max(2, diameter * 0.055)
                 )
                 .frame(width: diameter * 0.59, height: diameter * 0.59)
@@ -348,9 +350,9 @@ struct DesktopSceneTonearmView: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.4), Color(white: 0.14)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                        colors: [Color(white: 0.22), Color(white: 0.15)],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
                 )
                 .frame(width: diameter * 0.43, height: diameter * 0.43)
@@ -359,15 +361,34 @@ struct DesktopSceneTonearmView: View {
                 .fill(Color(white: 0.06))
                 .frame(width: diameter * 0.13, height: diameter * 0.13)
 
-            Circle()
-                .fill(.white.opacity(0.66))
-                .frame(width: diameter * 0.07, height: diameter * 0.07)
-                .offset(x: -diameter * 0.13, y: -diameter * 0.14)
-                .blur(radius: 0.5)
+            Canvas { context, canvasSize in
+                for index in 0..<20 {
+                    let angle = Double(index) * 2.399
+                    let radius = CGFloat((index * 11) % 41) / 100
+                    let point = CGPoint(
+                        x: canvasSize.width * (0.5 + CGFloat(cos(angle)) * radius),
+                        y: canvasSize.height * (0.5 + CGFloat(sin(angle)) * radius)
+                    )
+                    let grainDiameter = index.isMultiple(of: 3) ? 1.1 : 0.7
+                    context.fill(
+                        Path(
+                            ellipseIn: CGRect(
+                                x: point.x,
+                                y: point.y,
+                                width: grainDiameter,
+                                height: grainDiameter
+                            )
+                        ),
+                        with: .color(.white.opacity(index.isMultiple(of: 2) ? 0.045 : 0.025))
+                    )
+                }
+            }
+            .frame(width: diameter * 0.78, height: diameter * 0.78)
+            .clipShape(Circle())
         }
         .frame(width: diameter, height: diameter)
         .position(layout.pivotPoint)
-        .shadow(color: .black.opacity(0.3), radius: 2.5, x: 2, y: 3)
+        .shadow(color: .black.opacity(0.26), radius: 2, x: 2, y: 3)
     }
 }
 
