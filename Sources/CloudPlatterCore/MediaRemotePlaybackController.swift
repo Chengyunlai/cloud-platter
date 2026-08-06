@@ -26,7 +26,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
     }
 
     public func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
-        guard hasRequiredResources else {
+        guard paths.hasRequiredRuntimeResources() else {
             return .failed(.unavailable)
         }
         switch await currentTargetValidation() {
@@ -77,10 +77,6 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
             // 控制前复核失败只返回脱敏结果，不输出原始快照、stderr 或媒体内容。
         }
         return .unavailable
-    }
-
-    private var hasRequiredResources: Bool {
-        paths.hasRequiredRuntimeResources()
     }
 }
 

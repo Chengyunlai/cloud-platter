@@ -26,7 +26,7 @@ struct MediaRemoteNowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable
     }
 
     func fetch() async -> NowPlayingState {
-        guard hasRequiredResources else {
+        guard paths.hasRequiredRuntimeResources() else {
             return NowPlayingState(status: .unavailable)
         }
 
@@ -45,9 +45,5 @@ struct MediaRemoteNowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable
             // 一次性查询失败只返回脱敏状态，不记录原始输出、stderr 或用户媒体信息。
         }
         return NowPlayingState(status: .unavailable)
-    }
-
-    private var hasRequiredResources: Bool {
-        paths.hasRequiredRuntimeResources()
     }
 }
