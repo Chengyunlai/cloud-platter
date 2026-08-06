@@ -3,11 +3,28 @@ import CoreGraphics
 /// 把全屏尺寸转换为 A 方案的稳定构图，视图只负责在这些区域内绘制。
 struct DesktopSceneLayout: Equatable {
     let canvasSize: CGSize
+    let metadataSubtitleWidth: CGFloat
+
+    init(canvasSize: CGSize, metadataSubtitleWidth: CGFloat = 0) {
+        self.canvasSize = canvasSize
+        self.metadataSubtitleWidth = metadataSubtitleWidth
+    }
+
+    init(canvasSize: CGSize, subtitleText: String) {
+        let baseLayout = DesktopSceneLayout(canvasSize: canvasSize)
+        self.init(
+            canvasSize: canvasSize,
+            metadataSubtitleWidth: DesktopSceneMetadataMetrics.subtitleWidth(
+                text: subtitleText,
+                fontSize: baseLayout.metadataSubtitleFontSize
+            )
+        )
+    }
 
     var metadataFrame: CGRect {
         let originY = canvasSize.height * 0.08
         let preferredBottom = originY + canvasSize.height * 0.26
-        let turntableClearance = max(12, canvasSize.height * 0.02)
+        let turntableClearance = max(6, canvasSize.height * 0.008)
         let bottom = min(preferredBottom, turntableFrame.minY - turntableClearance)
 
         return CGRect(
@@ -41,23 +58,54 @@ struct DesktopSceneLayout: Equatable {
 
     var playbackControlsFrame: CGRect {
         let height = min(40, max(36, canvasSize.height * 0.044))
-        let leadingOffset = min(310, max(250, canvasSize.width * 0.215))
+        let width = height * 3.45
+        let gap = metadataControlGap
+        let maximumSubtitleWidth = max(
+            160,
+            metadataFrame.width - width - gap
+        )
+        let allocatedSubtitleWidth = min(
+            max(160, metadataSubtitleWidth),
+            maximumSubtitleWidth
+        )
         return CGRect(
-            x: metadataFrame.minX + leadingOffset,
+            x: metadataFrame.minX + allocatedSubtitleWidth + gap,
             y: metadataFrame.maxY - height,
-            width: height * 3.45,
+            width: width,
             height: height
         )
     }
 
     var metadataSubtitleFrame: CGRect {
         let controlsFrame = playbackControlsFrame
-        let gap = max(12, canvasSize.width * 0.01)
         return CGRect(
             x: metadataFrame.minX,
             y: controlsFrame.minY,
-            width: max(0, controlsFrame.minX - metadataFrame.minX - gap),
+            width: max(0, controlsFrame.minX - metadataFrame.minX - metadataControlGap),
             height: controlsFrame.height
         )
+    }
+
+    var metadataVerticalSpacing: CGFloat {
+        min(7, max(5, canvasSize.height * 0.007))
+    }
+
+    var metadataBrandFontSize: CGFloat {
+        min(14, max(12, canvasSize.width * 0.009))
+    }
+
+    var metadataTitleFontSize: CGFloat {
+        min(
+            74,
+            max(34, min(canvasSize.width * 0.043, canvasSize.height * 0.081))
+        )
+    }
+
+    var metadataSubtitleFontSize: CGFloat {
+        min(21, max(14, canvasSize.width * 0.012))
+    }
+
+    private var metadataControlGap: CGFloat {
+        max(12, canvasSize.width * 0.01)
     }
 }

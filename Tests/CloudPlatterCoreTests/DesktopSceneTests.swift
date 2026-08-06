@@ -62,7 +62,10 @@ struct DesktopSceneTests {
             CGSize(width: 1_440, height: 900),
             CGSize(width: 1_728, height: 720),
         ] {
-            let layout = DesktopSceneLayout(canvasSize: canvasSize)
+            let layout = DesktopSceneLayout(
+                canvasSize: canvasSize,
+                metadataSubtitleWidth: canvasSize.width * 0.42
+            )
             let canvas = CGRect(origin: .zero, size: canvasSize)
 
             #expect(canvas.contains(layout.turntableFrame))
@@ -72,7 +75,23 @@ struct DesktopSceneTests {
             #expect(canvas.contains(layout.metadataSubtitleFrame))
             #expect(layout.sleeveFrame.midX < layout.turntableFrame.midX)
             #expect(layout.metadataSubtitleFrame.maxX < layout.playbackControlsFrame.minX)
-            #expect(layout.playbackControlsFrame.maxX < layout.turntableFrame.minX)
+            #expect(!layout.playbackControlsFrame.intersects(layout.turntableFrame))
+
+            let minimumTitleFont = layout.metadataTitleFontSize * 0.72
+            let brandLineHeight = NSFont.systemFont(
+                ofSize: layout.metadataBrandFontSize,
+                weight: .semibold
+            ).boundingRectForFont.height
+            let titleLineHeight = NSFont.systemFont(
+                ofSize: minimumTitleFont,
+                weight: .semibold
+            ).boundingRectForFont.height
+            let requiredMetadataHeight =
+                brandLineHeight
+                + titleLineHeight * 2
+                + layout.metadataSubtitleFrame.height
+                + layout.metadataVerticalSpacing * 3
+            #expect(layout.metadataFrame.height >= requiredMetadataHeight)
         }
     }
 
@@ -113,7 +132,10 @@ struct DesktopSceneTests {
 
     @Test("A 方案在 1440 乘 900 屏幕使用约定比例")
     func walnutLayoutUsesApprovedCompositionAtReferenceSize() {
-        let layout = DesktopSceneLayout(canvasSize: CGSize(width: 1_440, height: 900))
+        let layout = DesktopSceneLayout(
+            canvasSize: CGSize(width: 1_440, height: 900),
+            metadataSubtitleWidth: 300
+        )
 
         #expect(abs(layout.turntableFrame.width - 806.4) < 0.01)
         #expect(abs(layout.turntableFrame.minX - 561.6) < 0.01)
@@ -121,7 +143,27 @@ struct DesktopSceneTests {
         #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
         #expect(abs(layout.metadataFrame.width - 1_180.8) < 0.01)
         #expect(abs(layout.playbackControlsFrame.height - 39.6) < 0.01)
-        #expect(layout.metadataSubtitleFrame.width > 290)
+        #expect(abs(layout.metadataSubtitleFrame.width - 300) < 0.01)
+    }
+
+    @Test("信息行按内容增长并在控制条前限制宽度")
+    func metadataSubtitlePositionsPlaybackControls() {
+        let canvasSize = CGSize(width: 1_440, height: 900)
+        let shortLayout = DesktopSceneLayout(
+            canvasSize: canvasSize,
+            metadataSubtitleWidth: 80
+        )
+        let longLayout = DesktopSceneLayout(
+            canvasSize: canvasSize,
+            metadataSubtitleWidth: 420
+        )
+
+        #expect(shortLayout.metadataSubtitleFrame.width == 160)
+        #expect(longLayout.metadataSubtitleFrame.width == 420)
+        #expect(
+            longLayout.playbackControlsFrame.minX
+                > shortLayout.playbackControlsFrame.minX
+        )
     }
 
     @Test("唱臂播放时落在音槽并在停止时回到唱片外")

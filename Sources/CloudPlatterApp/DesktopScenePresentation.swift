@@ -6,6 +6,7 @@ struct DesktopScenePresentation: Equatable {
     let titleText: String
     let artistText: String
     let albumText: String
+    let subtitleText: String
     let isRecordSpinning: Bool
     let usesPlaceholderArtwork: Bool
     let hasDisplayableMedia: Bool
@@ -19,6 +20,10 @@ struct DesktopScenePresentation: Equatable {
             ? nowPlayingPresentation.artistText
             : nowPlayingPresentation.guidanceText
         albumText = nowPlayingPresentation.albumText
+        subtitleText =
+            state.status == .playing || state.status == .paused
+            ? "\(artistText) · \(albumText)"
+            : artistText
         isRecordSpinning = state.status == .playing
         usesPlaceholderArtwork = state.artwork == nil
         hasDisplayableMedia = state.status == .playing || state.status == .paused

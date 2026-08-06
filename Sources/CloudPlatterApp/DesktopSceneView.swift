@@ -25,7 +25,10 @@ struct DesktopSceneView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let layout = DesktopSceneLayout(canvasSize: proxy.size)
+            let layout = DesktopSceneLayout(
+                canvasSize: proxy.size,
+                subtitleText: presentation.subtitleText
+            )
 
             ZStack(alignment: .topLeading) {
                 DesktopSceneWalnutBackground()
@@ -84,15 +87,15 @@ struct DesktopSceneView: View {
     }
 
     private func metadata(layout: DesktopSceneLayout) -> some View {
-        VStack(alignment: .leading, spacing: max(8, layout.canvasSize.height * 0.012)) {
+        VStack(alignment: .leading, spacing: layout.metadataVerticalSpacing) {
             Text("CloudPlatter")
-                .font(.system(size: max(12, layout.canvasSize.width * 0.009), weight: .semibold))
+                .font(.system(size: layout.metadataBrandFontSize, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.72))
 
             Text(presentation.titleText)
                 .font(
                     .system(
-                        size: min(74, max(34, layout.canvasSize.width * 0.043)),
+                        size: layout.metadataTitleFontSize,
                         weight: .semibold,
                         design: .default
                     )
@@ -106,8 +109,8 @@ struct DesktopSceneView: View {
 
             Spacer(minLength: 0)
 
-            Text(metadataSubtitle)
-                .font(.system(size: min(21, max(14, layout.canvasSize.width * 0.012))))
+            Text(presentation.subtitleText)
+                .font(.system(size: layout.metadataSubtitleFontSize))
                 .foregroundStyle(.white.opacity(0.76))
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -119,13 +122,6 @@ struct DesktopSceneView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .shadow(color: .black.opacity(0.34), radius: 2, y: 2)
-    }
-
-    private var metadataSubtitle: String {
-        guard nowPlayingState.status == .playing || nowPlayingState.status == .paused else {
-            return presentation.artistText
-        }
-        return "\(presentation.artistText) · \(presentation.albumText)"
     }
 
     private func rotationAngle(at date: Date) -> Angle {

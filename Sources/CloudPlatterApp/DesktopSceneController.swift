@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -7,12 +8,14 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     private var panels: [CGDirectDisplayID: DesktopScenePanelEntry] = [:]
     private var isShowing = false
     private var isSessionActive = true
+    private var nowPlayingStateObservation: AnyCancellable?
 
     init(playbackModel: PlaybackModel) {
         self.playbackModel = playbackModel
         super.init()
 
         observeSessionActivity()
+        observeNowPlayingState()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenParametersDidChange),
@@ -96,8 +99,10 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     }
 
     private func playbackControlFrame(screenFrame: NSRect) -> NSRect {
+        let presentation = DesktopScenePresentation(state: playbackModel.nowPlayingState)
         let localFrame = DesktopSceneLayout(
-            canvasSize: screenFrame.size
+            canvasSize: screenFrame.size,
+            subtitleText: presentation.subtitleText
         ).playbackControlsFrame
         return NSRect(
             x: screenFrame.minX + localFrame.minX,
@@ -105,6 +110,17 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
             width: localFrame.width,
             height: localFrame.height
         )
+    }
+
+    private func observeNowPlayingState() {
+        nowPlayingStateObservation = playbackModel.$nowPlayingState
+            .removeDuplicates()
+            .dropFirst()
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.synchronizePanels()
+                }
+            }
     }
 
     private func observeSessionActivity() {
