@@ -101,11 +101,21 @@ struct DesktopSceneView: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
                 .minimumScaleFactor(0.72)
+                .allowsTightening(true)
+                .layoutPriority(1)
+
+            Spacer(minLength: 0)
 
             Text(metadataSubtitle)
                 .font(.system(size: min(21, max(14, layout.canvasSize.width * 0.012))))
                 .foregroundStyle(.white.opacity(0.76))
                 .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(
+                    width: layout.metadataSubtitleFrame.width,
+                    height: layout.metadataSubtitleFrame.height,
+                    alignment: .leading
+                )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .shadow(color: .black.opacity(0.34), radius: 2, y: 2)

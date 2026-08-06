@@ -69,7 +69,10 @@ struct DesktopSceneTests {
             #expect(canvas.contains(layout.sleeveFrame))
             #expect(canvas.contains(layout.metadataFrame))
             #expect(canvas.contains(layout.playbackControlsFrame))
+            #expect(canvas.contains(layout.metadataSubtitleFrame))
             #expect(layout.sleeveFrame.midX < layout.turntableFrame.midX)
+            #expect(layout.metadataSubtitleFrame.maxX < layout.playbackControlsFrame.minX)
+            #expect(layout.playbackControlsFrame.maxX < layout.turntableFrame.minX)
         }
     }
 
@@ -116,6 +119,9 @@ struct DesktopSceneTests {
         #expect(abs(layout.turntableFrame.minX - 561.6) < 0.01)
         #expect(abs(layout.sleeveFrame.width - 446.4) < 0.01)
         #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
+        #expect(abs(layout.metadataFrame.width - 1_180.8) < 0.01)
+        #expect(abs(layout.playbackControlsFrame.height - 39.6) < 0.01)
+        #expect(layout.metadataSubtitleFrame.width > 290)
     }
 
     @Test("唱臂播放时落在音槽并在停止时回到唱片外")

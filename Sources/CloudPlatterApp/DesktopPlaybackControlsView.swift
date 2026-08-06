@@ -10,7 +10,7 @@ struct DesktopPlaybackControlsView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             controlButton(
                 command: .previousTrack,
                 symbolName: "backward.end.fill",
@@ -28,7 +28,7 @@ struct DesktopPlaybackControlsView: View {
                 label: "下一首"
             )
         }
-        .padding(6)
+        .padding(5)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.white.opacity(0.14), in: Capsule())
         .overlay {
@@ -60,7 +60,7 @@ struct DesktopPlaybackControlsView: View {
                 } else {
                     Label(label, systemImage: symbolName)
                         .labelStyle(.iconOnly)
-                        .font(.system(size: isPrimary ? 16 : 14, weight: .semibold))
+                        .font(.system(size: isPrimary ? 14 : 12, weight: .semibold))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

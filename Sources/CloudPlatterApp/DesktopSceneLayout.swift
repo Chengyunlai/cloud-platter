@@ -5,11 +5,16 @@ struct DesktopSceneLayout: Equatable {
     let canvasSize: CGSize
 
     var metadataFrame: CGRect {
-        CGRect(
+        let originY = canvasSize.height * 0.08
+        let preferredBottom = originY + canvasSize.height * 0.26
+        let turntableClearance = max(12, canvasSize.height * 0.02)
+        let bottom = min(preferredBottom, turntableFrame.minY - turntableClearance)
+
+        return CGRect(
             x: canvasSize.width * 0.07,
-            y: canvasSize.height * 0.08,
-            width: canvasSize.width * 0.4,
-            height: canvasSize.height * 0.26
+            y: originY,
+            width: canvasSize.width * 0.82,
+            height: max(canvasSize.height * 0.18, bottom - originY)
         )
     }
 
@@ -35,12 +40,24 @@ struct DesktopSceneLayout: Equatable {
     }
 
     var playbackControlsFrame: CGRect {
-        let height = min(48, max(42, canvasSize.height * 0.055))
+        let height = min(40, max(36, canvasSize.height * 0.044))
+        let leadingOffset = min(310, max(250, canvasSize.width * 0.215))
+        return CGRect(
+            x: metadataFrame.minX + leadingOffset,
+            y: metadataFrame.maxY - height,
+            width: height * 3.45,
+            height: height
+        )
+    }
+
+    var metadataSubtitleFrame: CGRect {
+        let controlsFrame = playbackControlsFrame
+        let gap = max(12, canvasSize.width * 0.01)
         return CGRect(
             x: metadataFrame.minX,
-            y: metadataFrame.maxY - height,
-            width: height * 3.6,
-            height: height
+            y: controlsFrame.minY,
+            width: max(0, controlsFrame.minX - metadataFrame.minX - gap),
+            height: controlsFrame.height
         )
     }
 }
