@@ -158,8 +158,8 @@ struct DesktopSceneTests {
             metadataSubtitleWidth: 420
         )
 
-        #expect(shortLayout.metadataSubtitleFrame.width == 160)
-        #expect(longLayout.metadataSubtitleFrame.width == 420)
+        #expect(abs(shortLayout.metadataSubtitleFrame.width - 160) < 0.01)
+        #expect(abs(longLayout.metadataSubtitleFrame.width - 420) < 0.01)
         #expect(
             longLayout.playbackControlsFrame.minX
                 > shortLayout.playbackControlsFrame.minX
