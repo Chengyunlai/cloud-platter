@@ -176,6 +176,20 @@ struct DesktopSceneTests {
         )
     }
 
+    @Test("作者信息与播放控制紧跟在单行标题下方")
+    func metadataInformationRowStaysCloseToTitle() {
+        let canvasSize = CGSize(width: 1_440, height: 900)
+        let layout = DesktopSceneLayout(
+            canvasSize: canvasSize,
+            titleText: "Summer (Tropicala)",
+            subtitleText: "匿名艺人 · 匿名专辑"
+        )
+
+        #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsFrame.minY)
+        #expect(layout.playbackControlsFrame.minY - layout.metadataFrame.minY < 150)
+        #expect(layout.playbackControlsFrame.maxY < layout.metadataFrame.maxY)
+    }
+
     @Test("唱臂播放时落在音槽并在停止时回到唱片外")
     func tonearmStylusMovesBetweenGrooveAndRest() {
         for canvasSize in [

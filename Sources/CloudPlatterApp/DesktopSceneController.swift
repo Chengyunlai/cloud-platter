@@ -102,6 +102,7 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
         let presentation = DesktopScenePresentation(state: playbackModel.nowPlayingState)
         let localFrame = DesktopSceneLayout(
             canvasSize: screenFrame.size,
+            titleText: presentation.titleText,
             subtitleText: presentation.subtitleText
         ).playbackControlsFrame
         return NSRect(

@@ -60,7 +60,11 @@ enum DesktopSceneWalnutTexture {
     }
 
     static var moduleResourceURL: URL? {
-        Bundle.module.url(forResource: resourceName, withExtension: "jpg")
+        // 独立 App 缺少资源时不能触发 SwiftPM 自动访问器中的 fatalError。
+        guard Bundle.main.bundleURL.pathExtension != "app" else {
+            return nil
+        }
+        return Bundle.module.url(forResource: resourceName, withExtension: "jpg")
     }
 
     private static let nsImage: NSImage? = {

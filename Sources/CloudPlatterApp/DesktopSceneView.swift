@@ -27,6 +27,7 @@ struct DesktopSceneView: View {
         GeometryReader { proxy in
             let layout = DesktopSceneLayout(
                 canvasSize: proxy.size,
+                titleText: presentation.titleText,
                 subtitleText: presentation.subtitleText
             )
 
@@ -106,8 +107,6 @@ struct DesktopSceneView: View {
                 .minimumScaleFactor(0.72)
                 .allowsTightening(true)
                 .layoutPriority(1)
-
-            Spacer(minLength: 0)
 
             Text(presentation.subtitleText)
                 .font(.system(size: layout.metadataSubtitleFontSize))

@@ -4,19 +4,30 @@ import CoreGraphics
 struct DesktopSceneLayout: Equatable {
     let canvasSize: CGSize
     let metadataSubtitleWidth: CGFloat
+    let measuredMetadataTitleHeight: CGFloat
 
-    init(canvasSize: CGSize, metadataSubtitleWidth: CGFloat = 0) {
+    init(
+        canvasSize: CGSize,
+        metadataSubtitleWidth: CGFloat = 0,
+        measuredMetadataTitleHeight: CGFloat = 0
+    ) {
         self.canvasSize = canvasSize
         self.metadataSubtitleWidth = metadataSubtitleWidth
+        self.measuredMetadataTitleHeight = measuredMetadataTitleHeight
     }
 
-    init(canvasSize: CGSize, subtitleText: String) {
+    init(canvasSize: CGSize, titleText: String, subtitleText: String) {
         let baseLayout = DesktopSceneLayout(canvasSize: canvasSize)
         self.init(
             canvasSize: canvasSize,
             metadataSubtitleWidth: DesktopSceneMetadataMetrics.subtitleWidth(
                 text: subtitleText,
                 fontSize: baseLayout.metadataSubtitleFontSize
+            ),
+            measuredMetadataTitleHeight: DesktopSceneMetadataMetrics.titleHeight(
+                text: titleText,
+                fontSize: baseLayout.metadataTitleFontSize,
+                maximumWidth: baseLayout.metadataFrame.width
             )
         )
     }
@@ -70,7 +81,7 @@ struct DesktopSceneLayout: Equatable {
         )
         return CGRect(
             x: metadataFrame.minX + allocatedSubtitleWidth + gap,
-            y: metadataFrame.maxY - height,
+            y: min(metadataFrame.maxY - height, metadataInformationRowMinY),
             width: width,
             height: height
         )
@@ -103,6 +114,16 @@ struct DesktopSceneLayout: Equatable {
 
     var metadataSubtitleFontSize: CGFloat {
         min(21, max(14, canvasSize.width * 0.012))
+    }
+
+    private var metadataInformationRowMinY: CGFloat {
+        let brandLineHeight = ceil(metadataBrandFontSize * 1.2)
+        let defaultTitleHeight = ceil(metadataTitleFontSize * 1.2)
+        let titleHeight = max(defaultTitleHeight, measuredMetadataTitleHeight)
+        return metadataFrame.minY
+            + brandLineHeight
+            + titleHeight
+            + metadataVerticalSpacing * 2
     }
 
     private var metadataControlGap: CGFloat {

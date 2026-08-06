@@ -68,10 +68,9 @@ struct DesktopSceneTonearmView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(white: 0.08),
-                            Color(white: 0.34),
-                            Color(white: 0.62),
-                            Color(white: 0.12),
+                            Color(white: 0.13),
+                            Color(white: 0.5),
+                            Color(white: 0.16),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -96,7 +95,7 @@ struct DesktopSceneTonearmView: View {
             x: layout.pivotPoint.x,
             y: layout.pivotPoint.y - size.height * 0.095
         )
-        .shadow(color: .black.opacity(0.42), radius: 3, x: 2, y: 4)
+        .shadow(color: .black.opacity(0.32), radius: 2, x: 2, y: 3)
     }
 
     private func tonearmTube(layout: DesktopSceneTonearmLayout, tubeWidth: CGFloat) -> some View {
@@ -106,15 +105,15 @@ struct DesktopSceneTonearmView: View {
         return ZStack {
             DesktopSceneTonearmTubeShape()
                 .stroke(
-                    .black.opacity(0.46),
-                    style: StrokeStyle(lineWidth: tubeWidth + 5, lineCap: .round)
+                    .black.opacity(0.5),
+                    style: StrokeStyle(lineWidth: tubeWidth + 4, lineCap: .round)
                 )
-                .offset(x: 3, y: 5)
-                .blur(radius: 1.4)
+                .offset(x: 2, y: 3)
+                .blur(radius: 0.7)
 
             DesktopSceneTonearmTubeShape()
                 .stroke(
-                    Color(white: 0.1),
+                    Color(white: 0.12),
                     style: StrokeStyle(lineWidth: tubeWidth + 2.5, lineCap: .round)
                 )
 
@@ -122,10 +121,9 @@ struct DesktopSceneTonearmView: View {
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(white: 0.3),
-                            Color(white: 0.94),
-                            Color(white: 0.68),
-                            Color(white: 0.22),
+                            Color(white: 0.43),
+                            Color(white: 0.9),
+                            Color(white: 0.48),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -135,8 +133,8 @@ struct DesktopSceneTonearmView: View {
 
             DesktopSceneTonearmTubeShape()
                 .stroke(
-                    .white.opacity(0.58),
-                    style: StrokeStyle(lineWidth: 1.15, lineCap: .round)
+                    .white.opacity(0.48),
+                    style: StrokeStyle(lineWidth: 1, lineCap: .round)
                 )
                 .offset(x: -tubeWidth * 0.2)
         }
@@ -174,10 +172,8 @@ struct DesktopSceneTonearmView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(white: 0.36),
-                            Color(white: 0.92),
-                            Color(white: 0.58),
-                            Color(white: 0.24),
+                            Color(white: 0.86),
+                            Color(white: 0.52),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -189,7 +185,7 @@ struct DesktopSceneTonearmView: View {
                 }
                 .frame(width: shellWidth, height: shellHeight)
                 .position(x: shellCenter.x, y: shellCenter.y)
-                .shadow(color: .black.opacity(0.4), radius: 2, x: 2, y: 3)
+                .shadow(color: .black.opacity(0.3), radius: 1.2, x: 1, y: 2)
 
             headshellPerforations(
                 center: shellCenter,
@@ -200,7 +196,7 @@ struct DesktopSceneTonearmView: View {
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [.white, Color(white: 0.2)],
+                            colors: [Color(white: 0.92), Color(white: 0.36)],
                             center: UnitPoint(x: 0.35, y: 0.28),
                             startRadius: 0,
                             endRadius: shellWidth * 0.08
@@ -301,7 +297,7 @@ struct DesktopSceneTonearmView: View {
             DesktopSceneCartridgeShape()
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.24), Color(white: 0.055)],
+                        colors: [Color(white: 0.2), Color(white: 0.08)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -318,7 +314,7 @@ struct DesktopSceneTonearmView: View {
                 .stroke(.white.opacity(0.24), lineWidth: 0.8)
         }
         .position(center)
-        .shadow(color: .black.opacity(0.36), radius: 1.2, x: 1, y: 2)
+        .shadow(color: .black.opacity(0.26), radius: 0.8, x: 1, y: 1)
     }
 
     private func pivotBase(layout: DesktopSceneTonearmLayout) -> some View {
@@ -327,28 +323,21 @@ struct DesktopSceneTonearmView: View {
 
         return ZStack {
             Ellipse()
-                .fill(.black.opacity(0.28))
+                .fill(.black.opacity(0.24))
                 .frame(width: diameter * 1.08, height: diameter * 0.75)
-                .blur(radius: 3)
-                .offset(x: 3, y: 6)
+                .blur(radius: 2)
+                .offset(x: 2, y: 4)
 
             Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color(white: 0.55), Color(white: 0.11)],
-                        center: UnitPoint(x: 0.34, y: 0.26),
-                        startRadius: 1,
-                        endRadius: diameter * 0.58
-                    )
-                )
+                .fill(Color(white: 0.12))
                 .overlay {
-                    Circle().strokeBorder(.black.opacity(0.72), lineWidth: max(2, diameter * 0.06))
+                    Circle().strokeBorder(Color(white: 0.04), lineWidth: max(2, diameter * 0.055))
                 }
 
             Circle()
                 .stroke(
                     LinearGradient(
-                        colors: [.white.opacity(0.66), .black.opacity(0.68)],
+                        colors: [.white.opacity(0.34), .black.opacity(0.48)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -358,11 +347,10 @@ struct DesktopSceneTonearmView: View {
 
             Circle()
                 .fill(
-                    RadialGradient(
-                        colors: [Color(white: 0.88), Color(white: 0.3), Color(white: 0.08)],
-                        center: UnitPoint(x: 0.34, y: 0.27),
-                        startRadius: 0,
-                        endRadius: diameter * 0.28
+                    LinearGradient(
+                        colors: [Color(white: 0.4), Color(white: 0.14)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
                 .frame(width: diameter * 0.43, height: diameter * 0.43)
@@ -372,14 +360,14 @@ struct DesktopSceneTonearmView: View {
                 .frame(width: diameter * 0.13, height: diameter * 0.13)
 
             Circle()
-                .fill(.white.opacity(0.78))
+                .fill(.white.opacity(0.66))
                 .frame(width: diameter * 0.07, height: diameter * 0.07)
                 .offset(x: -diameter * 0.13, y: -diameter * 0.14)
                 .blur(radius: 0.5)
         }
         .frame(width: diameter, height: diameter)
         .position(layout.pivotPoint)
-        .shadow(color: .black.opacity(0.36), radius: 4, x: 2, y: 4)
+        .shadow(color: .black.opacity(0.3), radius: 2.5, x: 2, y: 3)
     }
 }
 
