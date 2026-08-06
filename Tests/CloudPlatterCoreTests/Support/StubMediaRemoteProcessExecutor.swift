@@ -41,7 +41,7 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
         lock.withLock {
             recordedRunArguments.append(arguments)
         }
-        capabilityResult
+        return capabilityResult
     }
 
     func lines(arguments: [String], initialOutputTimeout: Duration)
