@@ -146,6 +146,16 @@ struct DesktopSceneTests {
         #expect(abs(layout.metadataSubtitleFrame.width - 300) < 0.01)
     }
 
+    @Test("木纹资源以四千像素原图随 SwiftPM 目标分发")
+    func walnutTextureShipsAtSourceResolution() throws {
+        let url = try #require(DesktopSceneWalnutTexture.moduleResourceURL)
+        let image = try #require(NSImage(contentsOf: url))
+        let representation = try #require(image.representations.first)
+
+        #expect(representation.pixelsWide >= 4_096)
+        #expect(representation.pixelsHigh >= 4_096)
+    }
+
     @Test("信息行按内容增长并在控制条前限制宽度")
     func metadataSubtitlePositionsPlaybackControls() {
         let canvasSize = CGSize(width: 1_440, height: 900)

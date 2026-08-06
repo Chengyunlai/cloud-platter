@@ -15,7 +15,8 @@ let package = Package(
         .target(name: "CloudPlatterCore"),
         .executableTarget(
             name: "CloudPlatterApp",
-            dependencies: ["CloudPlatterCore"]
+            dependencies: ["CloudPlatterCore"],
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "CloudPlatterCoreTests",

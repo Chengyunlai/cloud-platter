@@ -29,34 +29,27 @@ struct DesktopSceneTonearmView: View {
 
     private func armAssembly(layout: DesktopSceneTonearmLayout) -> some View {
         let size = layout.size
-        let tubeWidth = max(7, size.width * 0.075)
+        let tubeWidth = max(7, size.width * 0.072)
 
         return ZStack(alignment: .topLeading) {
-            Capsule()
+            counterweight(layout: layout)
+
+            RoundedRectangle(cornerRadius: tubeWidth / 2, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.12), Color(white: 0.38), Color(white: 0.1)],
+                        colors: [Color(white: 0.12), Color(white: 0.5), Color(white: 0.16)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
                 )
-                .frame(width: size.width * 0.32, height: size.height * 0.075)
+                .frame(width: tubeWidth + 5, height: size.height * 0.15)
                 .overlay {
-                    Capsule()
-                        .strokeBorder(.white.opacity(0.18), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: tubeWidth / 2, style: .continuous)
+                        .strokeBorder(.white.opacity(0.26), lineWidth: 1)
                 }
                 .position(
                     x: layout.pivotPoint.x,
-                    y: layout.pivotPoint.y - size.height * 0.085
-                )
-                .shadow(color: .black.opacity(0.38), radius: 3, x: 2, y: 3)
-
-            RoundedRectangle(cornerRadius: tubeWidth / 2, style: .continuous)
-                .fill(Color(white: 0.2))
-                .frame(width: tubeWidth + 3, height: size.height * 0.14)
-                .position(
-                    x: layout.pivotPoint.x,
-                    y: layout.pivotPoint.y - size.height * 0.015
+                    y: layout.pivotPoint.y + size.height * 0.012
                 )
 
             tonearmTube(layout: layout, tubeWidth: tubeWidth)
@@ -65,33 +58,74 @@ struct DesktopSceneTonearmView: View {
         .frame(width: size.width, height: size.height)
     }
 
+    private func counterweight(layout: DesktopSceneTonearmLayout) -> some View {
+        let size = layout.size
+        let width = size.width * 0.34
+        let height = size.height * 0.084
+
+        return ZStack {
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(white: 0.08),
+                            Color(white: 0.34),
+                            Color(white: 0.62),
+                            Color(white: 0.12),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+
+            Rectangle()
+                .fill(.black.opacity(0.44))
+                .frame(width: max(2, width * 0.07))
+                .offset(x: -width * 0.22)
+
+            Rectangle()
+                .fill(.white.opacity(0.26))
+                .frame(width: 1)
+                .offset(x: width * 0.18)
+        }
+        .frame(width: width, height: height)
+        .overlay {
+            Capsule().strokeBorder(.black.opacity(0.58), lineWidth: 1)
+        }
+        .position(
+            x: layout.pivotPoint.x,
+            y: layout.pivotPoint.y - size.height * 0.095
+        )
+        .shadow(color: .black.opacity(0.42), radius: 3, x: 2, y: 4)
+    }
+
     private func tonearmTube(layout: DesktopSceneTonearmLayout, tubeWidth: CGFloat) -> some View {
         let size = layout.size
-        let tubeFrame = CGSize(width: size.width * 0.28, height: layout.tubeLength)
+        let tubeFrame = CGSize(width: size.width * 0.38, height: layout.tubeLength)
 
         return ZStack {
             DesktopSceneTonearmTubeShape()
                 .stroke(
-                    .black.opacity(0.42),
-                    style: StrokeStyle(lineWidth: tubeWidth + 4, lineCap: .round)
+                    .black.opacity(0.46),
+                    style: StrokeStyle(lineWidth: tubeWidth + 5, lineCap: .round)
                 )
-                .offset(x: 3, y: 4)
-                .blur(radius: 1.2)
+                .offset(x: 3, y: 5)
+                .blur(radius: 1.4)
 
             DesktopSceneTonearmTubeShape()
                 .stroke(
-                    Color(white: 0.16),
-                    style: StrokeStyle(lineWidth: tubeWidth + 2, lineCap: .round)
+                    Color(white: 0.1),
+                    style: StrokeStyle(lineWidth: tubeWidth + 2.5, lineCap: .round)
                 )
 
             DesktopSceneTonearmTubeShape()
                 .stroke(
                     LinearGradient(
                         colors: [
-                            Color(white: 0.32),
-                            Color(white: 0.9),
-                            Color(white: 0.56),
-                            Color(white: 0.2),
+                            Color(white: 0.3),
+                            Color(white: 0.94),
+                            Color(white: 0.68),
+                            Color(white: 0.22),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -101,10 +135,10 @@ struct DesktopSceneTonearmView: View {
 
             DesktopSceneTonearmTubeShape()
                 .stroke(
-                    .white.opacity(0.42),
-                    style: StrokeStyle(lineWidth: 1.1, lineCap: .round)
+                    .white.opacity(0.58),
+                    style: StrokeStyle(lineWidth: 1.15, lineCap: .round)
                 )
-                .offset(x: -tubeWidth * 0.18)
+                .offset(x: -tubeWidth * 0.2)
         }
         .frame(width: tubeFrame.width, height: tubeFrame.height)
         .position(
@@ -115,21 +149,35 @@ struct DesktopSceneTonearmView: View {
 
     private func headshell(layout: DesktopSceneTonearmLayout) -> some View {
         let size = layout.size
-        let shellWidth = size.width * 0.28
-        let shellHeight = size.height * 0.115
+        let shellWidth = size.width * 0.29
+        let shellHeight = size.height * 0.12
         let shellCenter = CGPoint(
-            x: layout.tubeEndPoint.x - size.width * 0.012,
-            y: layout.tubeEndPoint.y + shellHeight * 0.52
+            x: layout.tubeEndPoint.x - size.width * 0.01,
+            y: layout.tubeEndPoint.y + shellHeight * 0.5
+        )
+        let cartridgeCenter = CGPoint(
+            x: layout.stylusPointBeforeRotation.x,
+            y: layout.stylusPointBeforeRotation.y - size.height * 0.052
+        )
+        let cantileverStart = CGPoint(
+            x: cartridgeCenter.x + size.width * 0.018,
+            y: cartridgeCenter.y + size.height * 0.034
         )
 
         return ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: shellWidth * 0.12, style: .continuous)
+                .fill(Color.black.opacity(0.36))
+                .frame(width: shellWidth * 0.34, height: shellHeight * 0.18)
+                .position(x: shellCenter.x, y: shellCenter.y - shellHeight * 0.5)
+
             DesktopSceneHeadshellShape()
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(white: 0.13),
-                            Color(white: 0.38),
-                            Color(white: 0.16),
+                            Color(white: 0.36),
+                            Color(white: 0.92),
+                            Color(white: 0.58),
+                            Color(white: 0.24),
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -137,99 +185,201 @@ struct DesktopSceneTonearmView: View {
                 )
                 .overlay {
                     DesktopSceneHeadshellShape()
-                        .stroke(.white.opacity(0.28), lineWidth: 1)
+                        .stroke(.black.opacity(0.62), lineWidth: 1)
                 }
                 .frame(width: shellWidth, height: shellHeight)
                 .position(x: shellCenter.x, y: shellCenter.y)
-                .shadow(color: .black.opacity(0.36), radius: 2, x: 2, y: 3)
+                .shadow(color: .black.opacity(0.4), radius: 2, x: 2, y: 3)
 
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.46, green: 0.34, blue: 0.2),
-                            Color(white: 0.12),
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(width: size.width * 0.13, height: size.height * 0.047)
-                .position(
-                    x: layout.stylusPointBeforeRotation.x,
-                    y: layout.pivotPoint.y + size.height * 0.655
-                )
+            headshellPerforations(
+                center: shellCenter,
+                shellSize: CGSize(width: shellWidth, height: shellHeight)
+            )
 
-            Path { path in
-                path.move(
-                    to: CGPoint(
-                        x: layout.stylusPointBeforeRotation.x,
-                        y: layout.pivotPoint.y + size.height * 0.67
+            ForEach([-1.0, 1.0], id: \.self) { direction in
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [.white, Color(white: 0.2)],
+                            center: UnitPoint(x: 0.35, y: 0.28),
+                            startRadius: 0,
+                            endRadius: shellWidth * 0.08
+                        )
                     )
-                )
+                    .frame(width: shellWidth * 0.1, height: shellWidth * 0.1)
+                    .position(
+                        x: shellCenter.x + shellWidth * 0.25 * direction,
+                        y: shellCenter.y - shellHeight * 0.28
+                    )
+            }
+
+            cartridge(
+                center: cartridgeCenter,
+                size: CGSize(width: size.width * 0.16, height: size.height * 0.055)
+            )
+
+            let cantileverPath = Path { path in
+                path.move(to: cantileverStart)
                 path.addLine(to: layout.stylusPointBeforeRotation)
             }
-            .stroke(
-                Color(red: 0.18, green: 0.13, blue: 0.09),
-                style: StrokeStyle(lineWidth: max(1.2, size.width * 0.012), lineCap: .round)
+
+            cantileverPath
+                .stroke(
+                    .black.opacity(0.68),
+                    style: StrokeStyle(
+                        lineWidth: max(2.4, size.width * 0.019),
+                        lineCap: .round
+                    )
+                )
+
+            cantileverPath.stroke(
+                LinearGradient(
+                    colors: [Color(white: 0.96), Color(white: 0.55)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                ),
+                style: StrokeStyle(
+                    lineWidth: max(1.2, size.width * 0.01),
+                    lineCap: .round
+                )
             )
 
             Circle()
-                .fill(Color(red: 0.62, green: 0.45, blue: 0.24))
-                .frame(width: max(3, size.width * 0.028), height: max(3, size.width * 0.028))
+                .fill(Color(red: 0.68, green: 0.24, blue: 0.07))
+                .frame(width: max(2.5, size.width * 0.024), height: max(2.5, size.width * 0.024))
+                .position(cantileverStart)
+
+            Ellipse()
+                .fill(.black.opacity(0.34))
+                .frame(width: size.width * 0.065, height: max(1.5, size.height * 0.006))
+                .position(
+                    x: layout.stylusPointBeforeRotation.x + size.width * 0.012,
+                    y: layout.stylusPointBeforeRotation.y + size.height * 0.009
+                )
+                .blur(radius: 0.8)
+
+            DesktopSceneStylusTipShape()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.96), Color(red: 0.42, green: 0.25, blue: 0.08)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: max(4, size.width * 0.032), height: max(5, size.width * 0.038))
                 .position(layout.stylusPointBeforeRotation)
         }
         .frame(width: size.width, height: size.height)
     }
 
+    private func headshellPerforations(center: CGPoint, shellSize: CGSize) -> some View {
+        ZStack {
+            ForEach(0..<15, id: \.self) { index in
+                let column = CGFloat(index % 3) - 1
+                let row = CGFloat(index / 3) - 2
+
+                Circle()
+                    .fill(Color(white: 0.08).opacity(0.88))
+                    .overlay {
+                        Circle()
+                            .stroke(.white.opacity(0.28), lineWidth: 0.5)
+                    }
+                    .frame(
+                        width: max(1.8, shellSize.width * 0.07),
+                        height: max(1.8, shellSize.width * 0.07)
+                    )
+                    .position(
+                        x: center.x + column * shellSize.width * 0.13,
+                        y: center.y + row * shellSize.height * 0.12 + shellSize.height * 0.06
+                    )
+            }
+        }
+    }
+
+    private func cartridge(center: CGPoint, size: CGSize) -> some View {
+        ZStack {
+            DesktopSceneCartridgeShape()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.24), Color(white: 0.055)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+
+            Rectangle()
+                .fill(Color(red: 0.48, green: 0.22, blue: 0.08))
+                .frame(width: size.width * 0.16, height: size.height * 0.72)
+                .offset(x: size.width * 0.28)
+        }
+        .frame(width: size.width, height: size.height)
+        .overlay {
+            DesktopSceneCartridgeShape()
+                .stroke(.white.opacity(0.24), lineWidth: 0.8)
+        }
+        .position(center)
+        .shadow(color: .black.opacity(0.36), radius: 1.2, x: 1, y: 2)
+    }
+
     private func pivotBase(layout: DesktopSceneTonearmLayout) -> some View {
         let size = layout.size
-        let diameter = size.width * 0.58
+        let diameter = size.width * 0.6
 
         return ZStack {
-            Circle()
-                .fill(.black.opacity(0.22))
-                .frame(width: diameter * 1.06, height: diameter * 0.72)
+            Ellipse()
+                .fill(.black.opacity(0.28))
+                .frame(width: diameter * 1.08, height: diameter * 0.75)
                 .blur(radius: 3)
                 .offset(x: 3, y: 6)
 
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color(white: 0.5), Color(white: 0.14)],
-                        center: UnitPoint(x: 0.36, y: 0.28),
+                        colors: [Color(white: 0.55), Color(white: 0.11)],
+                        center: UnitPoint(x: 0.34, y: 0.26),
                         startRadius: 1,
-                        endRadius: diameter * 0.56
+                        endRadius: diameter * 0.58
                     )
                 )
                 .overlay {
-                    Circle().strokeBorder(.black.opacity(0.5), lineWidth: max(2, diameter * 0.055))
+                    Circle().strokeBorder(.black.opacity(0.72), lineWidth: max(2, diameter * 0.06))
                 }
+
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [.white.opacity(0.66), .black.opacity(0.68)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: max(2, diameter * 0.055)
+                )
+                .frame(width: diameter * 0.59, height: diameter * 0.59)
 
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color(white: 0.72), Color(white: 0.24), Color(white: 0.08)],
-                        center: UnitPoint(x: 0.34, y: 0.28),
+                        colors: [Color(white: 0.88), Color(white: 0.3), Color(white: 0.08)],
+                        center: UnitPoint(x: 0.34, y: 0.27),
                         startRadius: 0,
-                        endRadius: diameter * 0.3
+                        endRadius: diameter * 0.28
                     )
                 )
-                .frame(width: diameter * 0.48, height: diameter * 0.48)
+                .frame(width: diameter * 0.43, height: diameter * 0.43)
 
             Circle()
-                .fill(.black.opacity(0.76))
-                .frame(width: diameter * 0.14, height: diameter * 0.14)
+                .fill(Color(white: 0.06))
+                .frame(width: diameter * 0.13, height: diameter * 0.13)
 
             Circle()
-                .fill(.white.opacity(0.72))
-                .frame(width: diameter * 0.08, height: diameter * 0.08)
+                .fill(.white.opacity(0.78))
+                .frame(width: diameter * 0.07, height: diameter * 0.07)
                 .offset(x: -diameter * 0.13, y: -diameter * 0.14)
-                .blur(radius: 0.6)
+                .blur(radius: 0.5)
         }
         .frame(width: diameter, height: diameter)
         .position(layout.pivotPoint)
-        .shadow(color: .black.opacity(0.34), radius: 4, x: 2, y: 4)
+        .shadow(color: .black.opacity(0.36), radius: 4, x: 2, y: 4)
     }
 }
 
@@ -238,9 +388,14 @@ private struct DesktopSceneTonearmTubeShape: Shape {
         var path = Path()
         path.move(to: CGPoint(x: rect.midX, y: rect.minY))
         path.addCurve(
-            to: CGPoint(x: rect.midX - rect.width * 0.12, y: rect.maxY),
-            control1: CGPoint(x: rect.midX + rect.width * 0.11, y: rect.height * 0.3),
-            control2: CGPoint(x: rect.midX - rect.width * 0.12, y: rect.height * 0.72)
+            to: CGPoint(x: rect.width * 0.36, y: rect.height * 0.62),
+            control1: CGPoint(x: rect.width * 0.69, y: rect.height * 0.2),
+            control2: CGPoint(x: rect.width * 0.61, y: rect.height * 0.48)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.width * 0.42, y: rect.maxY),
+            control1: CGPoint(x: rect.width * 0.22, y: rect.height * 0.75),
+            control2: CGPoint(x: rect.width * 0.25, y: rect.height * 0.91)
         )
         return path
     }
@@ -251,11 +406,35 @@ private struct DesktopSceneHeadshellShape: Shape {
         var path = Path()
         path.move(to: CGPoint(x: rect.width * 0.35, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.width * 0.65, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.width * 0.78, y: rect.maxY * 0.84))
+        path.addLine(to: CGPoint(x: rect.width * 0.83, y: rect.maxY * 0.84))
         path.addQuadCurve(
-            to: CGPoint(x: rect.width * 0.22, y: rect.maxY * 0.84),
+            to: CGPoint(x: rect.width * 0.17, y: rect.maxY * 0.84),
             control: CGPoint(x: rect.midX, y: rect.maxY)
         )
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct DesktopSceneCartridgeShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.height * 0.14))
+        path.addLine(to: CGPoint(x: rect.width * 0.82, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.width * 0.18, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+private struct DesktopSceneStylusTipShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.height * 0.62))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.height * 0.62))
         path.closeSubpath()
         return path
     }

@@ -2,6 +2,19 @@
 
 CloudPlatter 随安装包分发以下第三方组件。除项目自身许可证外，这些组件分别适用其原始许可证。
 
+## Wood Table 001 木纹纹理
+
+- 作者：Dimitrios Savva（摄影）、Rico Cilliers（处理）
+- 来源：Poly Haven，<https://polyhaven.com/a/wood_table_001>
+- 原始文件：`wood_table_001_diff_4k.jpg`
+- 原始下载地址：<https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/wood_table_001/wood_table_001_diff_4k.jpg>
+- 许可证：CC0 1.0 Universal，<https://polyhaven.com/license>
+
+CloudPlatter 使用该 4K 漫反射贴图作为全屏桌面的木纹背景。仓库中的
+`walnut-desktop-4k.jpg` 仅对原图进行了无损旋转，使木纹方向适合横向显示器；未添加第三方标识、
+文字或其他内容。Poly Haven 明确说明其资产采用 CC0，可复制、修改并随开源项目或安装包分发，
+无需署名；本节仍保留来源和修改记录，方便复核与后续维护。
+
 ## MediaRemote Adapter
 
 - 项目：<https://github.com/ungive/mediaremote-adapter>
