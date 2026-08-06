@@ -44,32 +44,67 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
         let activeScreenIdentifiers = Set(screens.map { identifier, _ in identifier })
 
         for identifier in Array(panels.keys) where !activeScreenIdentifiers.contains(identifier) {
-            panels.removeValue(forKey: identifier)?.panel.close()
+            guard let entry = panels.removeValue(forKey: identifier) else {
+                continue
+            }
+            entry.scenePanel.close()
+            entry.controlPanel.close()
         }
 
         for (identifier, screen) in screens {
-            let entry = panels[identifier] ?? makePanel(frame: screen.frame)
-            entry.panel.setFrame(screen.frame, display: entry.panel.isVisible)
+            let entry = panels[identifier] ?? makePanelEntry(screenFrame: screen.frame)
+            entry.scenePanel.setFrame(screen.frame, display: entry.scenePanel.isVisible)
+            entry.controlPanel.setFrame(
+                playbackControlFrame(screenFrame: screen.frame),
+                display: entry.controlPanel.isVisible
+            )
             panels[identifier] = entry
-            if isShowing, !entry.panel.isVisible {
-                entry.panel.orderFrontRegardless()
+            if isShowing {
+                if !entry.scenePanel.isVisible {
+                    entry.scenePanel.orderFrontRegardless()
+                }
+                if !entry.controlPanel.isVisible {
+                    entry.controlPanel.orderFrontRegardless()
+                }
             }
         }
         updateWindowVisibility()
     }
 
-    private func makePanel(frame: NSRect) -> DesktopScenePanelEntry {
+    private func makePanelEntry(screenFrame: NSRect) -> DesktopScenePanelEntry {
         let activity = DesktopSceneActivity()
         activity.isSessionActive = isSessionActive
-        let panel = DesktopScenePanel(contentRect: frame)
-        panel.delegate = self
-        panel.contentView = NSHostingView(
+        let scenePanel = DesktopScenePanel(contentRect: screenFrame)
+        scenePanel.delegate = self
+        scenePanel.contentView = NSHostingView(
             rootView: DesktopSceneStateBridge(
                 playbackModel: playbackModel,
                 activity: activity
             )
         )
-        return DesktopScenePanelEntry(panel: panel, activity: activity)
+        let controlPanel = DesktopPlaybackControlPanel(
+            contentRect: playbackControlFrame(screenFrame: screenFrame)
+        )
+        controlPanel.contentView = NSHostingView(
+            rootView: DesktopPlaybackControlsView(playbackModel: playbackModel)
+        )
+        return DesktopScenePanelEntry(
+            scenePanel: scenePanel,
+            controlPanel: controlPanel,
+            activity: activity
+        )
+    }
+
+    private func playbackControlFrame(screenFrame: NSRect) -> NSRect {
+        let localFrame = DesktopSceneLayout(
+            canvasSize: screenFrame.size
+        ).playbackControlsFrame
+        return NSRect(
+            x: screenFrame.minX + localFrame.minX,
+            y: screenFrame.maxY - localFrame.maxY,
+            width: localFrame.width,
+            height: localFrame.height
+        )
     }
 
     private func observeSessionActivity() {
@@ -104,7 +139,8 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
     private func updateWindowVisibility() {
         for entry in panels.values {
             entry.activity.isWindowVisible =
-                entry.panel.isVisible && entry.panel.occlusionState.contains(.visible)
+                entry.scenePanel.isVisible
+                && entry.scenePanel.occlusionState.contains(.visible)
         }
     }
 
@@ -130,7 +166,8 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
 
 @MainActor
 private struct DesktopScenePanelEntry {
-    let panel: DesktopScenePanel
+    let scenePanel: DesktopScenePanel
+    let controlPanel: DesktopPlaybackControlPanel
     let activity: DesktopSceneActivity
 }
 

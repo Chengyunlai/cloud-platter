@@ -68,6 +68,7 @@ struct DesktopSceneTests {
             #expect(canvas.contains(layout.turntableFrame))
             #expect(canvas.contains(layout.sleeveFrame))
             #expect(canvas.contains(layout.metadataFrame))
+            #expect(canvas.contains(layout.playbackControlsFrame))
             #expect(layout.sleeveFrame.midX < layout.turntableFrame.midX)
         }
     }
@@ -141,6 +142,22 @@ struct DesktopSceneTests {
         #expect(!panel.canBecomeKey)
         #expect(!panel.canBecomeMain)
         #expect(panel.ignoresMouseEvents)
+    }
+
+    @MainActor
+    @Test("播放控制层只接收按钮区域且不抢占键盘焦点")
+    func playbackControlPanelIsInteractiveWithoutTakingFocus() {
+        let panel = DesktopPlaybackControlPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 168, height: 48)
+        )
+
+        #expect(!panel.canBecomeKey)
+        #expect(!panel.canBecomeMain)
+        #expect(!panel.ignoresMouseEvents)
+        #expect(
+            panel.level.rawValue
+                == Int(CGWindowLevelForKey(.desktopIconWindow)) + 1
+        )
     }
 
     @Test("窗口不可见、会话非活动或减少动态效果时停止刷新")

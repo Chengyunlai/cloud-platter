@@ -34,7 +34,13 @@ struct DesktopSceneLayout: Equatable {
         )
     }
 
-    var statusDiameter: CGFloat {
-        max(6, min(10, canvasSize.width * 0.006))
+    var playbackControlsFrame: CGRect {
+        let height = min(48, max(42, canvasSize.height * 0.055))
+        return CGRect(
+            x: metadataFrame.minX,
+            y: metadataFrame.maxY - height,
+            width: height * 3.6,
+            height: height
+        )
     }
 }

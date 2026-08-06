@@ -106,9 +106,6 @@ struct DesktopSceneView: View {
                 .font(.system(size: min(21, max(14, layout.canvasSize.width * 0.012))))
                 .foregroundStyle(.white.opacity(0.76))
                 .lineLimit(1)
-
-            statusControl(layout: layout)
-                .padding(.top, max(6, layout.canvasSize.height * 0.012))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .shadow(color: .black.opacity(0.34), radius: 2, y: 2)
@@ -119,39 +116,6 @@ struct DesktopSceneView: View {
             return presentation.artistText
         }
         return "\(presentation.artistText) · \(presentation.albumText)"
-    }
-
-    /// 桌面窗口保持点击穿透，因此这里使用按钮式轮廓表达状态，不提供会误导用户的空操作。
-    private func statusControl(layout: DesktopSceneLayout) -> some View {
-        HStack(spacing: max(8, layout.canvasSize.width * 0.006)) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: layout.statusDiameter, height: layout.statusDiameter)
-                .shadow(color: statusColor.opacity(0.65), radius: 3)
-
-            Text(presentation.statusText)
-                .font(
-                    .system(
-                        size: min(15, max(12, layout.canvasSize.width * 0.009)),
-                        weight: .medium
-                    )
-                )
-                .foregroundStyle(.white.opacity(0.92))
-        }
-        .padding(.horizontal, max(13, layout.canvasSize.width * 0.009))
-        .padding(.vertical, max(7, layout.canvasSize.height * 0.008))
-        .background(.white.opacity(0.14), in: Capsule())
-        .overlay {
-            Capsule()
-                .stroke(.white.opacity(0.22), lineWidth: 0.75)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("播放状态：\(presentation.statusText)")
-    }
-
-    private var statusColor: Color {
-        presentation.isRecordSpinning
-            ? Color(red: 0.83, green: 1, blue: 0.38) : .white.opacity(0.48)
     }
 
     private func rotationAngle(at date: Date) -> Angle {
