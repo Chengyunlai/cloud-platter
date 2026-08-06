@@ -8,8 +8,11 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
     let capabilityResult: Result<Int32, MediaRemoteProcessError>
     private let lock = NSLock()
     private let streamResults: [Result<[Data], MediaRemoteProcessError>]
+    private let streamDelay: Duration
     private var nextStreamIndex = 0
     private var recordedRunArguments: [[String]] = []
+    private var recordedRunTimeouts: [Duration] = []
+    private var recordedInitialOutputTimeouts: [Duration] = []
 
     var streamInvocationCount: Int {
         lock.withLock { nextStreamIndex }
@@ -19,20 +22,32 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
         lock.withLock { recordedRunArguments }
     }
 
-    init(
-        capabilityResult: Result<Int32, MediaRemoteProcessError>,
-        streamLines: [Data]
-    ) {
-        self.capabilityResult = capabilityResult
-        streamResults = [.success(streamLines)]
+    var runTimeouts: [Duration] {
+        lock.withLock { recordedRunTimeouts }
+    }
+
+    var initialOutputTimeouts: [Duration] {
+        lock.withLock { recordedInitialOutputTimeouts }
     }
 
     init(
         capabilityResult: Result<Int32, MediaRemoteProcessError>,
-        streamResults: [Result<[Data], MediaRemoteProcessError>]
+        streamLines: [Data],
+        streamDelay: Duration = .zero
+    ) {
+        self.capabilityResult = capabilityResult
+        streamResults = [.success(streamLines)]
+        self.streamDelay = streamDelay
+    }
+
+    init(
+        capabilityResult: Result<Int32, MediaRemoteProcessError>,
+        streamResults: [Result<[Data], MediaRemoteProcessError>],
+        streamDelay: Duration = .zero
     ) {
         self.capabilityResult = capabilityResult
         self.streamResults = streamResults
+        self.streamDelay = streamDelay
     }
 
     func run(arguments: [String], timeout: Duration) async
@@ -40,6 +55,7 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
     {
         lock.withLock {
             recordedRunArguments.append(arguments)
+            recordedRunTimeouts.append(timeout)
         }
         return capabilityResult
     }
@@ -47,6 +63,10 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
     func lines(arguments: [String], initialOutputTimeout: Duration)
         -> AsyncThrowingStream<Data, any Error>
     {
+        lock.withLock {
+            recordedInitialOutputTimeouts.append(initialOutputTimeout)
+        }
+
         let result = lock.withLock {
             let result = streamResults[min(nextStreamIndex, streamResults.count - 1)]
             nextStreamIndex += 1
@@ -54,14 +74,20 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
         }
 
         return AsyncThrowingStream { continuation in
-            switch result {
-            case .success(let lines):
-                for line in lines {
-                    continuation.yield(line)
+            Task {
+                if streamDelay > .zero {
+                    try? await Task.sleep(for: streamDelay)
                 }
-                continuation.finish()
-            case .failure(let error):
-                continuation.finish(throwing: error)
+
+                switch result {
+                case .success(let lines):
+                    for line in lines {
+                        continuation.yield(line)
+                    }
+                    continuation.finish()
+                case .failure(let error):
+                    continuation.finish(throwing: error)
+                }
             }
         }
     }

@@ -4,8 +4,6 @@ import Foundation
 
 @MainActor
 final class PlaybackModel: ObservableObject {
-    private static let controlResponseDeadline = Duration.milliseconds(900)
-
     @Published private(set) var nowPlayingState = NowPlayingState.idle
     @Published private(set) var pendingPlaybackControl: PlaybackControlCommand?
     @Published private(set) var playbackControlFailure: PlaybackControlFailure?
@@ -61,7 +59,7 @@ final class PlaybackModel: ObservableObject {
 
             Task {
                 do {
-                    try await Task.sleep(for: Self.controlResponseDeadline)
+                    try await Task.sleep(for: PlaybackControlTiming.responseDeadline)
                 } catch {
                     return
                 }

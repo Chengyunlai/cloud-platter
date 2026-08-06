@@ -1,5 +1,12 @@
 import Foundation
 
+/// 集中管理播放控制的底层请求与界面响应预算，避免两层单独调参后失去顺序关系。
+public enum PlaybackControlTiming {
+    /// MediaRemote 子进程应在界面兜底前返回，给 UI 留出清理 pending 的余量。
+    public static let requestTimeout = Duration.milliseconds(800)
+    public static let responseDeadline = Duration.milliseconds(900)
+}
+
 /// 用户可以从 CloudPlatter 主动发送的有限播放命令。
 public enum PlaybackControlCommand: Equatable, Sendable {
     case previousTrack

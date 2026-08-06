@@ -96,6 +96,34 @@ struct MediaRemotePlaybackControllerTests {
         #expect(await controller.send(.nextTrack) == .failed(.unavailable))
     }
 
+    @Test("来源复核与命令发送共享一个总超时预算")
+    func validationAndCommandShareOneTimeoutBudget() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamLines: [
+                Data(
+                    #"{"bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲"}"#
+                        .utf8
+                )
+            ],
+            streamDelay: .milliseconds(100)
+        )
+        let controller = MediaRemotePlaybackController(
+            paths: .playbackControlTestFixture,
+            executor: executor,
+            requestTimeout: .milliseconds(500)
+        )
+
+        #expect(await controller.send(.togglePlayPause) == .sent)
+        let validationTimeout = executor.initialOutputTimeouts.first
+        let commandTimeout = executor.runTimeouts.first
+        #expect(validationTimeout != nil)
+        #expect(commandTimeout != nil)
+        if let validationTimeout, let commandTimeout {
+            #expect(commandTimeout < validationTimeout)
+        }
+    }
+
     private func makeExecutor() -> StubMediaRemoteProcessExecutor {
         StubMediaRemoteProcessExecutor(
             capabilityResult: .success(0),

@@ -11,7 +11,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         self.init(
             paths: paths,
             executor: FoundationMediaRemoteProcessExecutor(executable: paths.perlExecutable),
-            requestTimeout: .milliseconds(800)
+            requestTimeout: PlaybackControlTiming.requestTimeout
         )
     }
 
@@ -29,7 +29,10 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         guard paths.hasRequiredRuntimeResources() else {
             return .failed(.unavailable)
         }
-        switch await currentTargetValidation() {
+        let clock = ContinuousClock()
+        let deadline = clock.now.advanced(by: requestTimeout)
+
+        switch await currentTargetValidation(deadline: deadline, clock: clock) {
         case .supported:
             break
         case .unsupported:
@@ -40,6 +43,9 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         guard !Task.isCancelled else {
             return .failed(.unavailable)
         }
+        guard let remainingTime = remainingTime(until: deadline, clock: clock) else {
+            return .failed(.unavailable)
+        }
 
         let result = await executor.run(
             arguments: [
@@ -48,7 +54,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
                 "send",
                 command.adapterIdentifier,
             ],
-            timeout: requestTimeout
+            timeout: remainingTime
         )
         switch result {
         case .success(0):
@@ -60,7 +66,14 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         }
     }
 
-    private func currentTargetValidation() async -> PlaybackTargetValidation {
+    private func currentTargetValidation(
+        deadline: ContinuousClock.Instant,
+        clock: ContinuousClock
+    ) async -> PlaybackTargetValidation {
+        guard let remainingTime = remainingTime(until: deadline, clock: clock) else {
+            return .unavailable
+        }
+
         do {
             for try await line in executor.lines(
                 arguments: [
@@ -69,7 +82,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
                     "get",
                     "--no-artwork",
                 ],
-                initialOutputTimeout: requestTimeout
+                initialOutputTimeout: remainingTime
             ) {
                 return try MediaRemotePlaybackTargetDecoder().decode(line)
             }
@@ -77,6 +90,15 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
             // 控制前复核失败只返回脱敏结果，不输出原始快照、stderr 或媒体内容。
         }
         return .unavailable
+    }
+
+    /// 来源复核与命令发送共享同一截止时间，避免两个串行阶段分别耗尽完整超时。
+    private func remainingTime(
+        until deadline: ContinuousClock.Instant,
+        clock: ContinuousClock
+    ) -> Duration? {
+        let remainingTime = clock.now.duration(to: deadline)
+        return remainingTime > .zero ? remainingTime : nil
     }
 }
 
