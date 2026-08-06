@@ -224,9 +224,18 @@ struct DesktopSceneTests {
             let engagedRadius = turntableLayout.stylusRadiusRatio(isEngaged: true)
             let restingRadius = turntableLayout.stylusRadiusRatio(isEngaged: false)
 
-            #expect(engagedRadius > 0.42)
-            #expect(engagedRadius < 0.9)
-            #expect(restingRadius > 1)
+            #expect(engagedRadius > 0.65)
+            #expect(engagedRadius < 0.82)
+            #expect(restingRadius > 1.4)
+        }
+    }
+
+    @Test("用户提供的唱机部件素材随 SwiftPM 目标分发")
+    func turntableMaterialAssetsShipWithApplication() throws {
+        for asset in DesktopSceneTurntableAsset.allCases {
+            let url = try #require(asset.moduleResourceURL)
+            let values = try url.resourceValues(forKeys: [.fileSizeKey])
+            #expect((values.fileSize ?? 0) > 1_024)
         }
     }
 

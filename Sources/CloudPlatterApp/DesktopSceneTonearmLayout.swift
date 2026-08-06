@@ -27,7 +27,7 @@ struct DesktopSceneTonearmLayout: Equatable {
     }
 
     func rotationDegrees(isEngaged: Bool) -> Double {
-        isEngaged ? 42 : 7
+        isEngaged ? 48 : 7
     }
 
     func stylusPoint(isEngaged: Bool) -> CGPoint {
