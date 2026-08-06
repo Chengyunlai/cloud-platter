@@ -68,6 +68,31 @@ struct PlaybackModelTests {
         #expect(commands.isEmpty)
     }
 
+    @Test("底层控制器停顿时在界面响应期限内解除等待状态")
+    func stalledControllerReleasesPendingStateWithinDeadline() async {
+        let controller = StalledPlaybackController()
+        let model = PlaybackModel(
+            source: SingleStatePlaybackSource(
+                state: NowPlayingState(
+                    sourceBundleIdentifier: "com.netease.163music",
+                    title: "匿名歌曲",
+                    status: .playing
+                )
+            ),
+            controller: controller
+        )
+        await waitUntilControllable(model)
+
+        let operation = Task {
+            await model.performPlaybackControl(.togglePlayPause)
+        }
+        try? await Task.sleep(for: .milliseconds(1_200))
+
+        #expect(model.pendingPlaybackControl == nil)
+        #expect(model.playbackControlFailure == .unavailable)
+        operation.cancel()
+    }
+
     private func waitUntilControllable(_ model: PlaybackModel) async {
         for _ in 0..<100 {
             if model.canControlPlayback {
@@ -100,5 +125,12 @@ private actor RecordingPlaybackController: PlaybackControlling {
     func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
         commands.append(command)
         return result
+    }
+}
+
+private actor StalledPlaybackController: PlaybackControlling {
+    func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
+        try? await Task.sleep(for: .seconds(3))
+        return .sent
     }
 }

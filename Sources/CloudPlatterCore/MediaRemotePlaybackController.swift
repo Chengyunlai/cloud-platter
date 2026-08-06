@@ -11,7 +11,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         self.init(
             paths: paths,
             executor: FoundationMediaRemoteProcessExecutor(executable: paths.perlExecutable),
-            requestTimeout: .seconds(2)
+            requestTimeout: .milliseconds(800)
         )
     }
 
