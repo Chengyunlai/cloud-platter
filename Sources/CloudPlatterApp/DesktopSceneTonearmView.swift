@@ -335,14 +335,20 @@ struct DesktopSceneTonearmView: View {
                 .offset(x: 2, y: 4)
 
             Circle()
-                .fill(Color(white: 0.12))
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.76), Color(white: 0.28), Color(white: 0.62)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .overlay {
-                    Circle().strokeBorder(Color(white: 0.04), lineWidth: max(2, diameter * 0.055))
+                    Circle().strokeBorder(Color(white: 0.07), lineWidth: max(2, diameter * 0.055))
                 }
 
             Circle()
                 .stroke(
-                    Color.white.opacity(0.09),
+                    Color(red: 0.72, green: 0.51, blue: 0.27).opacity(0.66),
                     lineWidth: max(2, diameter * 0.055)
                 )
                 .frame(width: diameter * 0.59, height: diameter * 0.59)
@@ -350,9 +356,9 @@ struct DesktopSceneTonearmView: View {
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(white: 0.22), Color(white: 0.15)],
-                        startPoint: .top,
-                        endPoint: .bottom
+                        colors: [Color(white: 0.38), Color(white: 0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
                 .frame(width: diameter * 0.43, height: diameter * 0.43)
