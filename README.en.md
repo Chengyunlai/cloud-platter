@@ -6,7 +6,7 @@
 
 When you play music in NetEase Cloud Music on your Mac, CloudPlatter turns the desktop into a full-screen walnut turntable scene. The current artwork, vinyl, and tonearm become part of a living desktop background.
 
-You can keep using the player you already know. CloudPlatter only reads local Now Playing information; it does not replace the player, require another music-account login, or upload your listening history.
+You can keep using the player you already know. CloudPlatter reads local Now Playing information and provides Previous, Play/Pause, and Next desktop controls; it does not replace the player, require another music-account login, or upload your listening history.
 
 ## Status
 
@@ -17,6 +17,7 @@ The project is currently in research and prototyping. Real-time title, artist, a
 - Detect play, pause, and track changes from NetEase Cloud Music
 - Show the current title, artist, album, and artwork
 - Render a click-through, full-screen animated turntable desktop on every display
+- Control the current NetEase Cloud Music session with Previous, Play/Pause, and Next desktop buttons
 - Provide menu bar controls for visibility, launch at login, and reduced motion
 - Work locally without another NetEase Cloud Music login
 
@@ -26,6 +27,7 @@ The project is currently in research and prototyping. Real-time title, artist, a
 - SwiftUI and Core Animation for settings and the turntable scene
 - A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper; an empty, unavailable, or timed-out silent event stream first triggers a one-shot MediaRemote snapshot, then an on-demand NetEase-targeted `/usr/bin/osascript` query if needed
 - Source filtering at the application boundary before private fields are converted into the project's own playback state
+- A fresh source check before every playback command so another media player is never controlled by mistake
 - GitHub Releases for downloadable builds
 
 The default observation path and its on-demand fallback do not require Accessibility or Screen & System Audio Recording permission, and they do not upload listening history. They rely on undocumented MediaRemote behavior and the `/usr/bin/perl` and `/usr/bin/osascript` currently bundled with macOS, so a future system update may break them and they are not suitable for Mac App Store distribution; the app performs capability checks and degrades safely when unavailable. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized. See [ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md) for the technical boundary.
