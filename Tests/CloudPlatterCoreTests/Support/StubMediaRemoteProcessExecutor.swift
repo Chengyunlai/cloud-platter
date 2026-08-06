@@ -9,9 +9,14 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
     private let lock = NSLock()
     private let streamResults: [Result<[Data], MediaRemoteProcessError>]
     private var nextStreamIndex = 0
+    private var recordedRunArguments: [[String]] = []
 
     var streamInvocationCount: Int {
         lock.withLock { nextStreamIndex }
+    }
+
+    var runArguments: [[String]] {
+        lock.withLock { recordedRunArguments }
     }
 
     init(
@@ -33,6 +38,9 @@ final class StubMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
     func run(arguments: [String], timeout: Duration) async
         -> Result<Int32, MediaRemoteProcessError>
     {
+        lock.withLock {
+            recordedRunArguments.append(arguments)
+        }
         capabilityResult
     }
 
