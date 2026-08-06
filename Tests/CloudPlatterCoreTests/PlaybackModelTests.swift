@@ -68,6 +68,105 @@ struct PlaybackModelTests {
         #expect(commands.isEmpty)
     }
 
+    @Test("来源复核不匹配后保持控制禁用")
+    func unsupportedControlFailureKeepsControlsDisabled() async {
+        let controller = RecordingPlaybackController(
+            result: .failed(.unsupportedSource)
+        )
+        let model = PlaybackModel(
+            source: SingleStatePlaybackSource(
+                state: NowPlayingState(
+                    sourceBundleIdentifier: "com.netease.163music",
+                    title: "匿名歌曲",
+                    status: .playing
+                )
+            ),
+            controller: controller
+        )
+        await waitUntilControllable(model)
+
+        await model.performPlaybackControl(.nextTrack)
+
+        #expect(model.playbackControlFailure == .unsupportedSource)
+        #expect(!model.canControlPlayback)
+    }
+
+    @Test("来源不匹配后仅在新状态到达时重新允许控制")
+    func newPlaybackStateClearsUnsupportedControlFailure() async {
+        let source = ManualPlaybackSource()
+        let controller = RecordingPlaybackController(
+            result: .failed(.unsupportedSource)
+        )
+        let initialState = NowPlayingState(
+            sourceBundleIdentifier: "com.netease.163music",
+            title: "匿名歌曲",
+            elapsed: 10,
+            status: .playing
+        )
+        let model = PlaybackModel(source: source, controller: controller)
+        source.send(initialState)
+        await waitUntilControllable(model)
+
+        await model.performPlaybackControl(.nextTrack)
+        source.send(initialState)
+        await Task.yield()
+        #expect(!model.canControlPlayback)
+
+        source.send(
+            NowPlayingState(
+                sourceBundleIdentifier: "com.netease.163music",
+                title: "匿名歌曲",
+                elapsed: 11,
+                status: .playing
+            )
+        )
+        for _ in 0..<100 where !model.canControlPlayback {
+            await Task.yield()
+        }
+
+        #expect(model.playbackControlFailure == nil)
+        #expect(model.canControlPlayback)
+    }
+
+    @Test("player-scoped 状态变化不会绕过全局来源不匹配")
+    func playerScopedChangeDoesNotClearGlobalTargetMismatch() async {
+        let source = ManualPlaybackSource()
+        let controller = RecordingPlaybackController(
+            result: .failed(.unsupportedSource),
+            targetValidation: .unsupported
+        )
+        let model = PlaybackModel(source: source, controller: controller)
+        source.send(
+            NowPlayingState(
+                sourceBundleIdentifier: "com.netease.163music",
+                title: "匿名歌曲",
+                elapsed: 10,
+                status: .playing
+            )
+        )
+        await waitUntilControllable(model)
+
+        await model.performPlaybackControl(.nextTrack)
+        source.send(
+            NowPlayingState(
+                sourceBundleIdentifier: "com.netease.163music",
+                title: "匿名歌曲",
+                elapsed: 11,
+                status: .playing
+            )
+        )
+        for _ in 0..<100 {
+            if await controller.validationCount > 0 {
+                break
+            }
+            await Task.yield()
+        }
+
+        #expect(await controller.validationCount == 1)
+        #expect(model.playbackControlFailure == .unsupportedSource)
+        #expect(!model.canControlPlayback)
+    }
+
     @Test("底层控制器停顿时在界面响应期限内解除等待状态")
     func stalledControllerReleasesPendingStateWithinDeadline() async {
         let controller = StalledPlaybackController()
@@ -114,12 +213,42 @@ private struct SingleStatePlaybackSource: PlaybackObservationSource {
     }
 }
 
+private final class ManualPlaybackSource: PlaybackObservationSource,
+    @unchecked Sendable
+{
+    private let stream: AsyncStream<NowPlayingState>
+    private let continuation: AsyncStream<NowPlayingState>.Continuation
+
+    init() {
+        (stream, continuation) = AsyncStream.makeStream(of: NowPlayingState.self)
+    }
+
+    func states() -> AsyncStream<NowPlayingState> {
+        stream
+    }
+
+    func send(_ state: NowPlayingState) {
+        continuation.yield(state)
+    }
+}
+
 private actor RecordingPlaybackController: PlaybackControlling {
     private(set) var commands: [PlaybackControlCommand] = []
+    private(set) var validationCount = 0
     private let result: PlaybackControlResult
+    private let targetValidation: PlaybackTargetValidation
 
-    init(result: PlaybackControlResult) {
+    init(
+        result: PlaybackControlResult,
+        targetValidation: PlaybackTargetValidation = .supported
+    ) {
         self.result = result
+        self.targetValidation = targetValidation
+    }
+
+    func validateCurrentTarget() async -> PlaybackTargetValidation {
+        validationCount += 1
+        targetValidation
     }
 
     func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
@@ -129,6 +258,10 @@ private actor RecordingPlaybackController: PlaybackControlling {
 }
 
 private actor StalledPlaybackController: PlaybackControlling {
+    func validateCurrentTarget() async -> PlaybackTargetValidation {
+        .supported
+    }
+
     func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
         try? await Task.sleep(for: .seconds(3))
         return .sent

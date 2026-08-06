@@ -10,8 +10,7 @@ protocol NowPlayingSnapshotFetching: Sendable {
 ///
 /// 每次调用都有首包超时并在返回后结束子进程；本类型不自行建立轮询，也不记录原始输出。
 struct JXANowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable {
-    private let paths: JXANowPlayingPaths
-    private let executor: any MediaRemoteProcessExecuting
+    private let responseFetcher: JXANowPlayingResponseFetcher
     private let requestTimeout: Duration
 
     init() {
@@ -30,32 +29,15 @@ struct JXANowPlayingSnapshotSource: NowPlayingSnapshotFetching, Sendable {
         executor: any MediaRemoteProcessExecuting,
         requestTimeout: Duration
     ) {
-        self.paths = paths
-        self.executor = executor
+        responseFetcher = JXANowPlayingResponseFetcher(paths: paths, executor: executor)
         self.requestTimeout = requestTimeout
     }
 
     func fetch() async -> NowPlayingState {
-        let fileManager = FileManager.default
-        guard fileManager.isExecutableFile(atPath: paths.osascriptExecutable.path),
-            fileManager.fileExists(atPath: paths.script.path)
-        else {
+        guard let response = await responseFetcher.fetch(timeout: requestTimeout) else {
             return NowPlayingState(status: .unavailable)
         }
-
-        do {
-            for try await line in executor.lines(
-                arguments: [
-                    "-l", "JavaScript", paths.script.path, "--",
-                    SupportedMediaSource.neteaseMusicBundleIdentifier,
-                ],
-                initialOutputTimeout: requestTimeout
-            ) {
-                return try JXANowPlayingResponseDecoder().decode(line)
-            }
-        } catch {
-            // 备用源失败只返回脱敏状态，不记录脚本输出、stderr 或用户媒体信息。
-        }
-        return NowPlayingState(status: .unavailable)
+        return (try? JXANowPlayingResponseDecoder().decode(response))
+            ?? NowPlayingState(status: .unavailable)
     }
 }

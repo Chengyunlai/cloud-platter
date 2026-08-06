@@ -5,6 +5,7 @@ import Foundation
 /// 解码器只接受网易云音乐候选项；响应不完整或字段格式变化时返回不可用状态，避免把其他
 /// 播放器或损坏数据送入界面。
 struct JXANowPlayingResponseDecoder: Sendable {
+    private static let globalCandidateSource = "global"
     private static let supportedCandidateSource = "supported"
 
     func decode(_ data: Data) throws -> NowPlayingState {
@@ -44,6 +45,28 @@ struct JXANowPlayingResponseDecoder: Sendable {
             playbackRate: candidate.playbackRate ?? (isPlaying ? 1 : 0),
             status: isPlaying ? .playing : .paused
         )
+    }
+
+    /// 播放控制只能接受系统全局当前目标，不能用网易云自身残留的 player-scoped 状态代替。
+    func decodePlaybackTarget(_ data: Data) throws -> PlaybackTargetValidation {
+        let response = try JSONDecoder().decode(Response.self, from: data)
+        guard response.complete,
+            let candidate = response.candidates.first(where: {
+                $0.source == Self.globalCandidateSource
+            })
+        else {
+            return .unavailable
+        }
+        guard
+            candidate.bundleIdentifier
+                == SupportedMediaSource.neteaseMusicBundleIdentifier
+        else {
+            return .unsupported
+        }
+        guard candidate.title?.nonEmpty != nil, candidate.playing != nil else {
+            return .unavailable
+        }
+        return .supported
     }
 }
 

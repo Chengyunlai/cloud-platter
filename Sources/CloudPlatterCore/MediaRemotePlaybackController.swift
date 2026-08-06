@@ -4,13 +4,21 @@ import Foundation
 public actor MediaRemotePlaybackController: PlaybackControlling {
     private let paths: MediaRemoteAdapterPaths
     private let executor: any MediaRemoteProcessExecuting
+    private let fallbackTargetValidator: (any PlaybackTargetValidating)?
     private let requestTimeout: Duration
 
     public init() {
         let paths = MediaRemoteAdapterPaths.bundled()
+        let jxaPaths = JXANowPlayingPaths.bundled()
         self.init(
             paths: paths,
             executor: FoundationMediaRemoteProcessExecutor(executable: paths.perlExecutable),
+            fallbackTargetValidator: JXAPlaybackTargetValidator(
+                paths: jxaPaths,
+                executor: FoundationMediaRemoteProcessExecutor(
+                    executable: jxaPaths.osascriptExecutable
+                )
+            ),
             requestTimeout: PlaybackControlTiming.requestTimeout
         )
     }
@@ -18,21 +26,31 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
     init(
         paths: MediaRemoteAdapterPaths,
         executor: any MediaRemoteProcessExecuting,
+        fallbackTargetValidator: (any PlaybackTargetValidating)? = nil,
         requestTimeout: Duration
     ) {
         self.paths = paths
         self.executor = executor
+        self.fallbackTargetValidator = fallbackTargetValidator
         self.requestTimeout = requestTimeout
+    }
+
+    public func validateCurrentTarget() async -> PlaybackTargetValidation {
+        guard paths.hasRequiredRuntimeResources() else {
+            return .unavailable
+        }
+        return await currentTargetValidation(
+            budget: PlaybackControlBudget(timeout: requestTimeout)
+        )
     }
 
     public func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
         guard paths.hasRequiredRuntimeResources() else {
             return .failed(.unavailable)
         }
-        let clock = ContinuousClock()
-        let deadline = clock.now.advanced(by: requestTimeout)
+        let budget = PlaybackControlBudget(timeout: requestTimeout)
 
-        switch await currentTargetValidation(deadline: deadline, clock: clock) {
+        switch await currentTargetValidation(budget: budget) {
         case .supported:
             break
         case .unsupported:
@@ -43,7 +61,7 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
         guard !Task.isCancelled else {
             return .failed(.unavailable)
         }
-        guard let remainingTime = remainingTime(until: deadline, clock: clock) else {
+        guard let remainingTime = budget.remainingTime else {
             return .failed(.unavailable)
         }
 
@@ -67,12 +85,15 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
     }
 
     private func currentTargetValidation(
-        deadline: ContinuousClock.Instant,
-        clock: ContinuousClock
+        budget: PlaybackControlBudget
     ) async -> PlaybackTargetValidation {
-        guard let remainingTime = remainingTime(until: deadline, clock: clock) else {
+        guard let remainingTime = budget.remainingTime else {
             return .unavailable
         }
+        let validationTimeout = min(
+            remainingTime,
+            PlaybackControlTiming.mediaRemoteValidationTimeout
+        )
 
         do {
             for try await line in executor.lines(
@@ -82,21 +103,56 @@ public actor MediaRemotePlaybackController: PlaybackControlling {
                     "get",
                     "--no-artwork",
                 ],
-                initialOutputTimeout: remainingTime
+                initialOutputTimeout: validationTimeout
             ) {
-                return try MediaRemotePlaybackTargetDecoder().decode(line)
+                let validation = try MediaRemotePlaybackTargetDecoder().decode(line)
+                if validation != .unavailable {
+                    return validation
+                }
+                break
             }
         } catch {
             // 控制前复核失败只返回脱敏结果，不输出原始快照、stderr 或媒体内容。
         }
-        return .unavailable
+        return await fallbackTargetValidation(budget: budget)
     }
 
-    /// 来源复核与命令发送共享同一截止时间，避免两个串行阶段分别耗尽完整超时。
-    private func remainingTime(
-        until deadline: ContinuousClock.Instant,
-        clock: ContinuousClock
-    ) -> Duration? {
+    /// 普通应用无法读取系统快照时，复用网易云进程内的定向查询确认目标，仍不依据过期 UI 状态发送。
+    private func fallbackTargetValidation(
+        budget: PlaybackControlBudget
+    ) async -> PlaybackTargetValidation {
+        guard let fallbackTargetValidator,
+            let remainingTime = budget.remainingTime
+        else {
+            return .unavailable
+        }
+        let validationTimeout = min(
+            remainingTime,
+            PlaybackControlTiming.fallbackValidationTimeout
+        )
+
+        let validation = await fallbackTargetValidator.validate(
+            timeout: validationTimeout
+        )
+        guard budget.remainingTime != nil else {
+            return .unavailable
+        }
+        return validation
+    }
+}
+
+/// 把串行复核与命令发送约束在同一绝对截止时间内。
+private struct PlaybackControlBudget: Sendable {
+    private let clock: ContinuousClock
+    private let deadline: ContinuousClock.Instant
+
+    init(timeout: Duration) {
+        let clock = ContinuousClock()
+        self.clock = clock
+        deadline = clock.now.advanced(by: timeout)
+    }
+
+    var remainingTime: Duration? {
         let remainingTime = clock.now.duration(to: deadline)
         return remainingTime > .zero ? remainingTime : nil
     }

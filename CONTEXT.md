@@ -38,7 +38,8 @@ CloudPlatter 是网易云音乐 macOS 客户端的桌面可视化伴侣。它观
   快照；没有得到可展示状态时，再由系统 `/usr/bin/osascript -l JavaScript` 执行只针对
   `com.netease.163music` 的低频 JXA 查询。事件流恢复后立即停止备用轮询。
 - MVP 使用 helper 的只读状态能力和 `previous`、`togglePlayPause`、`next` 三种播放控制；发送
-  前必须再次确认当前来源仍为网易云音乐，不能控制其他播放器。
+  前先通过 helper 即时复核来源，读取受限时再使用网易云定向 JXA 查询确认，不能仅依据界面旧
+  状态发送，也不能控制其他播放器。
 - 应用必须在 `/usr/bin/perl` 缺失、capability test 失败、字段结构变化、helper 退出或来源切换时
   安全降级，不能要求用户关闭系统安全机制。
 - Accessibility 与 ScreenCaptureKit 只保留为开发诊断或未来由用户主动开启的备用能力。

@@ -10,6 +10,7 @@ final class PlaybackModel: ObservableObject {
 
     private let controller: any PlaybackControlling
     private var observationTask: Task<Void, Never>?
+    private var targetRevalidationTask: Task<Void, Never>?
 
     init(
         source: any PlaybackObservationSource = FallbackPlaybackObservationSource(),
@@ -21,7 +22,11 @@ final class PlaybackModel: ObservableObject {
                 guard let self else {
                     return
                 }
+                let hasChanged = state != nowPlayingState
                 nowPlayingState = state
+                if playbackControlFailure == .unsupportedSource, hasChanged {
+                    revalidateCurrentTarget()
+                }
             }
         }
     }
@@ -30,6 +35,7 @@ final class PlaybackModel: ObservableObject {
         nowPlayingState.sourceBundleIdentifier
             == SupportedMediaSource.neteaseMusicBundleIdentifier
             && (nowPlayingState.status == .playing || nowPlayingState.status == .paused)
+            && playbackControlFailure != .unsupportedSource
     }
 
     func performPlaybackControl(_ command: PlaybackControlCommand) async {
@@ -39,10 +45,28 @@ final class PlaybackModel: ObservableObject {
 
         pendingPlaybackControl = command
         playbackControlFailure = nil
+        targetRevalidationTask?.cancel()
         let result = await sendWithinResponseDeadline(command)
         pendingPlaybackControl = nil
         if case .failed(let failure) = result {
             playbackControlFailure = failure
+        }
+    }
+
+    /// player-scoped 状态变化不能证明全局目标已恢复，必须重新执行只读复核后才能解锁。
+    private func revalidateCurrentTarget() {
+        targetRevalidationTask?.cancel()
+        let controller = self.controller
+        targetRevalidationTask = Task { [weak self] in
+            let validation = await controller.validateCurrentTarget()
+            guard let self, !Task.isCancelled,
+                playbackControlFailure == .unsupportedSource
+            else {
+                return
+            }
+            if validation == .supported {
+                playbackControlFailure = nil
+            }
         }
     }
 
@@ -72,6 +96,7 @@ final class PlaybackModel: ObservableObject {
 
     deinit {
         observationTask?.cancel()
+        targetRevalidationTask?.cancel()
     }
 }
 

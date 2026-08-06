@@ -64,6 +64,104 @@ struct MediaRemotePlaybackControllerTests {
         #expect(executor.runArguments.isEmpty)
     }
 
+    @Test("MediaRemote 读取受限时使用网易云定向复核后发送命令")
+    func unavailableMediaRemoteValidationFallsBackToNeteaseQuery() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let controller = MediaRemotePlaybackController(
+            paths: .playbackControlTestFixture,
+            executor: executor,
+            fallbackTargetValidator: StubPlaybackTargetValidator(result: .supported),
+            requestTimeout: .seconds(1)
+        )
+
+        #expect(await controller.send(.togglePlayPause) == .sent)
+        #expect(executor.runArguments.map(\.suffixCommandArguments) == [["send", "2"]])
+    }
+
+    @Test("定向复核未确认网易云时仍不发送命令")
+    func unsupportedFallbackValidationDoesNotSendCommand() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let controller = MediaRemotePlaybackController(
+            paths: .playbackControlTestFixture,
+            executor: executor,
+            fallbackTargetValidator: StubPlaybackTargetValidator(result: .unsupported),
+            requestTimeout: .seconds(1)
+        )
+
+        #expect(await controller.send(.nextTrack) == .failed(.unsupportedSource))
+        #expect(executor.runArguments.isEmpty)
+    }
+
+    @Test("定向复核不可用时安全降级且不发送命令")
+    func unavailableFallbackValidationDoesNotSendCommand() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let controller = MediaRemotePlaybackController(
+            paths: .playbackControlTestFixture,
+            executor: executor,
+            fallbackTargetValidator: StubPlaybackTargetValidator(result: .unavailable),
+            requestTimeout: .seconds(1)
+        )
+
+        #expect(await controller.send(.nextTrack) == .failed(.unavailable))
+        #expect(executor.runArguments.isEmpty)
+    }
+
+    @Test("主复核超时时仍为定向复核保留预算")
+    func timedOutPrimaryLeavesBudgetForFallbackValidation() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)],
+            streamDelay: .milliseconds(250)
+        )
+        let validator = StubPlaybackTargetValidator(result: .supported)
+        let controller = MediaRemotePlaybackController(
+            paths: .playbackControlTestFixture,
+            executor: executor,
+            fallbackTargetValidator: validator,
+            requestTimeout: .seconds(1)
+        )
+
+        #expect(await controller.send(.togglePlayPause) == .sent)
+        #expect(
+            executor.initialOutputTimeouts.first
+                == PlaybackControlTiming.mediaRemoteValidationTimeout
+        )
+        #expect(validator.timeouts.first != nil)
+        if let fallbackTimeout = validator.timeouts.first {
+            #expect(fallbackTimeout > .zero)
+            #expect(fallbackTimeout <= PlaybackControlTiming.fallbackValidationTimeout)
+        }
+    }
+
+    @Test("定向复核耗尽总预算后禁止发送命令")
+    func exhaustedFallbackBudgetDoesNotSendCommand() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let controller = MediaRemotePlaybackController(
+            paths: .playbackControlTestFixture,
+            executor: executor,
+            fallbackTargetValidator: StubPlaybackTargetValidator(
+                result: .supported,
+                delay: .milliseconds(350)
+            ),
+            requestTimeout: .milliseconds(300)
+        )
+
+        #expect(await controller.send(.togglePlayPause) == .failed(.unavailable))
+        #expect(executor.runArguments.isEmpty)
+    }
+
     @Test("Adapter 拒绝命令时返回脱敏失败")
     func rejectedCommandReturnsSanitizedFailure() async {
         let executor = StubMediaRemoteProcessExecutor(
@@ -120,7 +218,8 @@ struct MediaRemotePlaybackControllerTests {
         #expect(validationTimeout != nil)
         #expect(commandTimeout != nil)
         if let validationTimeout, let commandTimeout {
-            #expect(commandTimeout < validationTimeout)
+            #expect(validationTimeout <= PlaybackControlTiming.mediaRemoteValidationTimeout)
+            #expect(commandTimeout < .milliseconds(500))
         }
     }
 
@@ -144,6 +243,34 @@ struct MediaRemotePlaybackControllerTests {
             executor: executor,
             requestTimeout: .seconds(1)
         )
+    }
+}
+
+private final class StubPlaybackTargetValidator: PlaybackTargetValidating,
+    @unchecked Sendable
+{
+    private let lock = NSLock()
+    private let result: PlaybackTargetValidation
+    private let delay: Duration
+    private var recordedTimeouts: [Duration] = []
+
+    var timeouts: [Duration] {
+        lock.withLock { recordedTimeouts }
+    }
+
+    init(result: PlaybackTargetValidation, delay: Duration = .zero) {
+        self.result = result
+        self.delay = delay
+    }
+
+    func validate(timeout: Duration) async -> PlaybackTargetValidation {
+        lock.withLock {
+            recordedTimeouts.append(timeout)
+        }
+        if delay > .zero {
+            try? await Task.sleep(for: delay)
+        }
+        return result
     }
 }
 

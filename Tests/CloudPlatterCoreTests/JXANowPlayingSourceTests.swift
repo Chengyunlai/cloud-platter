@@ -30,6 +30,86 @@ struct JXANowPlayingSourceTests {
         #expect(try JXANowPlayingResponseDecoder().decode(response) == .idle)
     }
 
+    @Test("控制复核只接受系统全局当前目标为网易云")
+    func playbackTargetValidationAcceptsGlobalNetease() throws {
+        let response = Data(
+            #"{"complete":true,"candidates":[{"source":"global","bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲"},{"source":"supported","bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲"}]}"#
+                .utf8
+        )
+
+        #expect(
+            try JXANowPlayingResponseDecoder().decodePlaybackTarget(response)
+                == .supported
+        )
+    }
+
+    @Test("其他播放器成为全局目标时不使用网易云残留状态发送命令")
+    func playbackTargetValidationRejectsStaleNeteaseCandidate() throws {
+        let response = Data(
+            #"{"complete":true,"candidates":[{"source":"global","bundleIdentifier":"com.apple.Music","playing":true,"title":"匿名歌曲一"},{"source":"supported","bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲二"}]}"#
+                .utf8
+        )
+
+        #expect(
+            try JXANowPlayingResponseDecoder().decodePlaybackTarget(response)
+                == .unsupported
+        )
+    }
+
+    @Test("控制复核响应不完整或缺少播放字段时返回不可用")
+    func playbackTargetValidationRequiresCompleteGlobalFields() throws {
+        let incompleteResponse = Data(
+            #"{"complete":false,"candidates":[{"source":"global","bundleIdentifier":"com.netease.163music","playing":true,"title":"匿名歌曲"}]}"#
+                .utf8
+        )
+        let missingFieldsResponse = Data(
+            #"{"complete":true,"candidates":[{"source":"global","bundleIdentifier":"com.netease.163music","title":"匿名歌曲"}]}"#
+                .utf8
+        )
+
+        let decoder = JXANowPlayingResponseDecoder()
+        #expect(try decoder.decodePlaybackTarget(incompleteResponse) == .unavailable)
+        #expect(try decoder.decodePlaybackTarget(missingFieldsResponse) == .unavailable)
+    }
+
+    @Test("JXA 控制复核通过受控进程边界读取全局目标")
+    func playbackTargetValidatorUsesProcessBoundary() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamLines: [
+                Data(
+                    #"{"complete":true,"candidates":[{"source":"global","bundleIdentifier":"com.netease.163music","playing":false,"title":"匿名节目"}]}"#
+                        .utf8
+                )
+            ]
+        )
+        let validator = JXAPlaybackTargetValidator(
+            paths: .testFixture,
+            executor: executor
+        )
+        let timeout = Duration.milliseconds(321)
+
+        #expect(await validator.validate(timeout: timeout) == .supported)
+        #expect(executor.initialOutputTimeouts == [timeout])
+    }
+
+    @Test("JXA 控制复核进程超时时返回不可用")
+    func playbackTargetValidatorTimeoutBecomesUnavailable() async {
+        let executor = StubMediaRemoteProcessExecutor(
+            capabilityResult: .success(0),
+            streamResults: [.failure(.timedOut)]
+        )
+        let validator = JXAPlaybackTargetValidator(
+            paths: .testFixture,
+            executor: executor
+        )
+
+        #expect(
+            await validator.validate(timeout: .milliseconds(10))
+                == .unavailable
+        )
+    }
+
     @Test("脚本输出通过受控进程边界转换为状态")
     func scriptOutputUsesProcessBoundary() async {
         let executor = StubMediaRemoteProcessExecutor(

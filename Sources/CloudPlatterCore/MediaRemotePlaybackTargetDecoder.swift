@@ -25,9 +25,3 @@ struct MediaRemotePlaybackTargetDecoder: Sendable {
         return .supported
     }
 }
-
-enum PlaybackTargetValidation: Equatable, Sendable {
-    case supported
-    case unsupported
-    case unavailable
-}
