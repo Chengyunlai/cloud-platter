@@ -21,7 +21,8 @@ struct PlaybackModelTests {
 
         await model.performPlaybackControl(.nextTrack)
 
-        #expect(await controller.commands == [.nextTrack])
+        let commands = await controller.commands
+        #expect(commands == [.nextTrack])
         #expect(model.pendingPlaybackControl == nil)
         #expect(model.playbackControlFailure == .commandRejected)
     }
@@ -37,7 +38,8 @@ struct PlaybackModelTests {
 
         await model.performPlaybackControl(.togglePlayPause)
 
-        #expect(await controller.commands.isEmpty)
+        let commands = await controller.commands
+        #expect(commands.isEmpty)
     }
 
     private func waitUntilControllable(_ model: PlaybackModel) async {
