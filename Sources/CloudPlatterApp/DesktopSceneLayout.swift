@@ -72,17 +72,20 @@ struct DesktopSceneLayout: Equatable {
             canvasHeight: canvasSize.height
         )
         let width = DesktopPlaybackControlsMetrics.visualWidth(visualHeight: height)
+        let visualSize = CGSize(width: width, height: height)
+        let panelSize = DesktopPlaybackControlsMetrics.panelSize(visualSize: visualSize)
+        let horizontalHitInset = (panelSize.width - visualSize.width) / 2
         let gap = metadataControlGap
         let maximumSubtitleWidth = max(
             160,
-            metadataFrame.width - width - gap
+            metadataFrame.width - panelSize.width - gap
         )
         let allocatedSubtitleWidth = min(
             max(160, metadataSubtitleWidth),
             maximumSubtitleWidth
         )
         return CGRect(
-            x: metadataFrame.minX + allocatedSubtitleWidth + gap,
+            x: metadataFrame.minX + allocatedSubtitleWidth + gap + horizontalHitInset,
             y: min(metadataFrame.maxY - height, metadataInformationRowMinY),
             width: width,
             height: height
@@ -104,12 +107,13 @@ struct DesktopSceneLayout: Equatable {
     }
 
     var metadataSubtitleFrame: CGRect {
-        let controlsFrame = playbackControlsVisualFrame
+        let visualFrame = playbackControlsVisualFrame
+        let controlsFrame = playbackControlsFrame
         return CGRect(
             x: metadataFrame.minX,
-            y: controlsFrame.minY,
+            y: visualFrame.minY,
             width: max(0, controlsFrame.minX - metadataFrame.minX - metadataControlGap),
-            height: controlsFrame.height
+            height: visualFrame.height
         )
     }
 
