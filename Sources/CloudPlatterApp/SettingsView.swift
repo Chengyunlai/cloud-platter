@@ -2,6 +2,8 @@ import CloudPlatterCore
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.scenePhase) private var scenePhase
+
     let nowPlayingState: NowPlayingState
     @ObservedObject var launchAtLoginModel: LaunchAtLoginModel
 
@@ -20,6 +22,10 @@ struct SettingsView: View {
         .padding(26)
         .frame(width: 520, height: 500, alignment: .topLeading)
         .onAppear {
+            launchAtLoginModel.refresh()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
             launchAtLoginModel.refresh()
         }
     }

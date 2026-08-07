@@ -7,6 +7,10 @@ enum LaunchAtLoginStatus: Equatable {
     case unavailable
 }
 
+/// 隔离应用与 macOS 登录项服务的系统边界，供设置状态展示和测试替身使用。
+///
+/// 实现只负责读取当前注册状态、提交注册变更和打开系统设置；注册或取消注册失败时，
+/// 将系统错误原样抛给上层，由上层转换为适合用户阅读且不泄露隐私的信息。
 protocol LaunchAtLoginServicing {
     var status: LaunchAtLoginStatus { get }
 
