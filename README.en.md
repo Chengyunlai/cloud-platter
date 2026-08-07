@@ -8,6 +8,12 @@ When you play music in NetEase Cloud Music on your Mac, CloudPlatter turns the d
 
 You can keep using the player you already know. CloudPlatter reads local Now Playing information and provides Previous, Play/Pause, and Next desktop controls; it does not replace the player, require another music-account login, or upload your listening history.
 
+## Preview
+
+![CloudPlatter walnut turntable desktop](docs/images/cloud-platter-desktop.jpg)
+
+This screenshot comes directly from CloudPlatter's full-screen desktop layer; desktop icons, the Dock, and other application windows are not included.
+
 ## Status
 
 The project is currently in research and prototyping. Real-time title, artist, album, artwork, playback state, and track-change updates have been verified on macOS 26.3 with NetEase Cloud Music 3.1.9. Additional content types, app restarts, and system versions still require compatibility validation.
