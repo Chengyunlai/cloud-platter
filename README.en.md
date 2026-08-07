@@ -24,13 +24,15 @@ This screenshot comes directly from CloudPlatter's full-screen desktop layer; de
 
 ### Download a public build
 
-Start with [GitHub Releases](https://github.com/Chengyunlai/cloud-platter/releases). When a release is available, download `CloudPlatter-*-universal.zip` and its matching `.sha256` file. You can verify the download in Terminal:
+Start with [GitHub Releases](https://github.com/Chengyunlai/cloud-platter/releases). When a release is available, download `CloudPlatter-*-universal.dmg` and its matching `.sha256` file. You can verify the download in Terminal:
 
 ```bash
-shasum -a 256 -c CloudPlatter-*.zip.sha256
+shasum -a 256 -c CloudPlatter-*.dmg.sha256
 ```
 
-Unzip the archive and drag `CloudPlatter.app` into Applications. Public builds use an ad-hoc signature and are not notarized by Apple. On first launch, Control-click the app in Finder and choose Open, or use Open Anyway under System Settings → Privacy & Security. Only do this for an archive downloaded from this repository and verified with its checksum; there is no need to disable Gatekeeper globally.
+Open the DMG and drag `CloudPlatter.app` onto the Applications shortcut in the same window. Each release also keeps a Universal ZIP as a fallback; after unzipping it, drag the app into Applications in the same way.
+
+Public builds use an ad-hoc signature and are not notarized by Apple. On first launch, Control-click the app in Finder and choose Open, or use Open Anyway under System Settings → Privacy & Security. Only do this for a build downloaded from this repository and verified with its checksum; there is no need to disable Gatekeeper globally.
 
 If the Releases page does not have a build yet, package the current preview from source:
 
@@ -50,6 +52,7 @@ open dist/CloudPlatter.app
 3. The scene sits below desktop icons and regular application windows. Minimize your windows or use macOS Show Desktop to see the complete scene.
 4. Previous, Play/Pause, and Next controls appear to the right of the artist information. CloudPlatter confirms that NetEase Cloud Music is still the active media source before every command.
 5. Open the record icon or current track title in the menu bar to inspect the detected state, open Settings, or quit the app.
+6. To restore the desktop automatically after restarting or signing in again, enable Launch at Login in Settings. If macOS requires approval, follow the in-app link to System Settings → General → Login Items.
 
 CloudPlatter does not require Accessibility or Screen & System Audio Recording permission, and it does not require another NetEase Cloud Music login.
 
@@ -80,7 +83,7 @@ The project is currently in research and prototyping. Real-time title, artist, a
 - A replaceable observation source that lets the system `/usr/bin/perl` process load an isolated MediaRemote helper; an empty, unavailable, or timed-out silent event stream first triggers a one-shot MediaRemote snapshot, then an on-demand NetEase-targeted `/usr/bin/osascript` query if needed
 - Source filtering at the application boundary before private fields are converted into the project's own playback state
 - A fresh source check before every playback command so another media player is never controlled by mistake
-- GitHub Releases for downloadable builds
+- GitHub Releases with a drag-to-Applications DMG and a Universal ZIP fallback
 
 The default observation path and its on-demand fallback do not require Accessibility or Screen & System Audio Recording permission, and they do not upload listening history. They rely on undocumented MediaRemote behavior and the `/usr/bin/perl` and `/usr/bin/osascript` currently bundled with macOS, so a future system update may break them and they are not suitable for Mac App Store distribution; the app performs capability checks and degrades safely when unavailable. Downloaded builds may also require manual approval in macOS Privacy & Security settings unless they are signed and notarized. See [ADR-0004](docs/adr/0004-isolated-mediaremote-adapter.md) for the technical boundary.
 

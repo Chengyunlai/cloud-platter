@@ -27,13 +27,16 @@
 ### 下载公开安装包
 
 优先打开 [GitHub Releases](https://github.com/Chengyunlai/cloud-platter/releases)。如果页面已经提供
-版本，请下载 `CloudPlatter-*-universal.zip` 及同名 `.sha256` 文件，并可在终端验证完整性：
+版本，推荐下载 `CloudPlatter-*-universal.dmg` 及同名 `.sha256` 文件，并可在终端验证完整性：
 
 ```bash
-shasum -a 256 -c CloudPlatter-*.zip.sha256
+shasum -a 256 -c CloudPlatter-*.dmg.sha256
 ```
 
-解压后，把 `CloudPlatter.app` 拖入“应用程序”文件夹。公开版本使用 ad-hoc 签名且未经 Apple
+打开 DMG，把 `CloudPlatter.app` 拖到同一窗口中的“Applications”快捷入口。Release 同时保留
+Universal ZIP 作为备用；解压 ZIP 后，同样需要把 App 拖入“应用程序”文件夹。
+
+公开版本使用 ad-hoc 签名且未经 Apple
 公证；第一次打开时，请在 Finder 中右键应用并选择“打开”，或前往“系统设置 → 隐私与安全性”
 点击“仍要打开”。只应对从本仓库下载并完成校验的安装包执行此操作，不需要全局关闭 Gatekeeper。
 
@@ -56,6 +59,8 @@ open dist/CloudPlatter.app
 4. 歌手信息右侧提供上一首、播放/暂停和下一首三个按钮；每次控制前都会确认当前媒体仍来自
    网易云音乐。
 5. 点击菜单栏中的唱片图标或当前曲目名称，可以查看识别状态、打开设置或退出应用。
+6. 如需重启或重新登录 Mac 后自动恢复，打开设置并启用“登录时启动”；若 macOS 要求批准，
+   按界面提示前往“系统设置 → 通用 → 登录项”。
 
 CloudPlatter 不需要“辅助功能”或“屏幕与系统音频录制”权限，也不需要再次登录网易云音乐账号。
 
@@ -91,7 +96,7 @@ CloudPlatter 不需要“辅助功能”或“屏幕与系统音频录制”权�
   `/usr/bin/osascript` 按需执行网易云定向查询
 - 在应用边界过滤网易云音乐来源，并把私有字段转换为项目自己的播放状态
 - 发送播放命令前即时复核当前来源，避免控制其他播放器
-- 通过 GitHub Releases 提供可下载的安装包
+- 通过 GitHub Releases 提供可拖入“应用程序”的 DMG，并保留 Universal ZIP 备用包
 
 默认读取路径及按需备用路径都不需要“辅助功能”或“屏幕与系统音频录制”权限，也不会上传
 收听记录。它们依赖 Apple 未公开的 MediaRemote 行为以及 macOS 当前附带的 `/usr/bin/perl`

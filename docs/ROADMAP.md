@@ -8,7 +8,7 @@ CloudPlatter 的第一个稳定里程碑是：用户在网易云音乐播放歌�
 
 - 建立可编译、可测试的 Swift 原生菜单栏应用骨架。
 - 使用 CI 验证格式、构建、测试和 Universal 应用打包。
-- 使用 `v*` 标签创建包含 ZIP 与 SHA-256 的 GitHub Release。
+- 使用 `v*` 标签创建包含 DMG、备用 ZIP 与各自 SHA-256 的 GitHub Release。
 - 建立中文默认文档、贡献规范、Issue 模板、PR 阶段政策和领域文档。
 
 完成标准：`make check` 和 `make package` 在本机及 GitHub Actions 通过。

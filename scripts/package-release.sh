@@ -87,10 +87,29 @@ archive_name="$app_name-$version-universal.zip"
 archive_path="$dist_dir/$archive_name"
 ditto -c -k --sequesterRsrc --keepParent "$app_dir" "$archive_path"
 
+# DMG 提供标准的拖拽安装体验；ZIP 继续作为无需挂载磁盘映像的备用包。
+dmg_name="$app_name-$version-universal.dmg"
+dmg_path="$dist_dir/$dmg_name"
+dmg_source_dir="$dist_dir/dmg-source"
+mkdir -p "$dmg_source_dir"
+ditto "$app_dir" "$dmg_source_dir/$app_name.app"
+ln -s /Applications "$dmg_source_dir/Applications"
+hdiutil create \
+    -quiet \
+    -volname "$app_name $version" \
+    -srcfolder "$dmg_source_dir" \
+    -format UDZO \
+    -ov \
+    "$dmg_path"
+rm -rf "$dmg_source_dir"
+hdiutil verify "$dmg_path" >/dev/null
+
 # 校验文件只记录文件名，下载到任意目录后都可以直接验证。
 (
     cd "$dist_dir"
     shasum -a 256 "$archive_name" > "$archive_name.sha256"
+    shasum -a 256 "$dmg_name" > "$dmg_name.sha256"
 )
 
 echo "已生成：$archive_path"
+echo "已生成：$dmg_path"

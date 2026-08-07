@@ -12,7 +12,8 @@
 - 使用 `Package.swift` 管理核心库、菜单栏应用和测试目标。
 - 使用 `make check` 作为本地与 CI 的统一质量入口。
 - 使用脚本把两种架构的 Release 可执行文件合并为 Universal `.app`。
-- 开源 Release 使用 ad-hoc 签名，产出 ZIP 和 SHA-256；不包含证书或私钥。
+- 开源 Release 使用 ad-hoc 签名，产出带“Applications”快捷入口的 DMG、备用 ZIP，以及两种
+  包各自的 SHA-256；不包含证书或私钥。
 - 当 Asset Catalog、正式签名、公证或 Xcode 特有能力使脚本维护成本明显上升时，再用新 ADR 评估迁移到 Xcode project 或 XcodeGen。
 
 ## 后果

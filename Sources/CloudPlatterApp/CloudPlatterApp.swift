@@ -5,6 +5,7 @@ import SwiftUI
 struct CloudPlatterApp: App {
     @StateObject private var playbackModel: PlaybackModel
     @StateObject private var desktopSceneController: DesktopSceneController
+    @StateObject private var launchAtLoginModel: LaunchAtLoginModel
 
     init() {
         let playbackModel = PlaybackModel()
@@ -12,6 +13,7 @@ struct CloudPlatterApp: App {
         _desktopSceneController = StateObject(
             wrappedValue: DesktopSceneController(playbackModel: playbackModel)
         )
+        _launchAtLoginModel = StateObject(wrappedValue: LaunchAtLoginModel())
     }
 
     var body: some Scene {
@@ -29,7 +31,10 @@ struct CloudPlatterApp: App {
         .menuBarExtraStyle(.window)
 
         Settings {
-            SettingsView(nowPlayingState: playbackModel.nowPlayingState)
+            SettingsView(
+                nowPlayingState: playbackModel.nowPlayingState,
+                launchAtLoginModel: launchAtLoginModel
+            )
         }
     }
 }

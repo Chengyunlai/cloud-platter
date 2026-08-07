@@ -1,3 +1,9 @@
+## preview.3 更新
+
+- 设置窗口新增“登录时启动”，使用 macOS 官方 `SMAppService` 注册主应用，并明确显示系统批准状态。
+- Release 新增包含“Applications”快捷入口的 Universal DMG；下载后可以直接拖入“应用程序”。
+- Universal ZIP 继续作为备用包，DMG 与 ZIP 都提供独立 SHA-256 校验文件。
+
 ## preview.2 更新
 
 - 桌面控制条现在会接收首次鼠标点击，不再需要先激活 CloudPlatter。
@@ -14,11 +20,13 @@
 
 这个版本使用 ad-hoc 签名。首次打开时，你可能需要在 macOS“隐私与安全性”设置中手动允许 CloudPlatter；不需要也不建议全局关闭 Gatekeeper。
 
-下载后可以使用同目录的 `.sha256` 文件验证 ZIP 完整性：
+推荐下载 DMG，并使用同目录的 `.sha256` 文件验证完整性：
 
 ```bash
-shasum -a 256 -c CloudPlatter-*.zip.sha256
+shasum -a 256 -c CloudPlatter-*.dmg.sha256
 ```
+
+打开 DMG 后，将 `CloudPlatter.app` 拖到“Applications”快捷入口。ZIP 继续作为备用安装包。
 
 ## 已验证环境
 

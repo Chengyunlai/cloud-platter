@@ -40,6 +40,7 @@ jobs:
         with:
           name: CloudPlatter-ci-universal
           path: |
+            dist/*.dmg
             dist/*.zip
             dist/*.sha256
           if-no-files-found: error

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     let nowPlayingState: NowPlayingState
+    @ObservedObject var launchAtLoginModel: LaunchAtLoginModel
 
     private var presentation: NowPlayingPresentation {
         NowPlayingPresentation(state: nowPlayingState)
@@ -12,11 +13,47 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 22) {
             header
             playbackCard
+            launchAtLoginCard
             desktopSceneNote
             privacyNote
         }
         .padding(26)
-        .frame(width: 520, height: 380, alignment: .topLeading)
+        .frame(width: 520, height: 500, alignment: .topLeading)
+        .onAppear {
+            launchAtLoginModel.refresh()
+        }
+    }
+
+    private var launchAtLoginCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(
+                "登录时启动",
+                isOn: Binding(
+                    get: { launchAtLoginModel.isEnabled },
+                    set: { launchAtLoginModel.setEnabled($0) }
+                )
+            )
+            .disabled(!launchAtLoginModel.canChangeRegistration)
+
+            Text(launchAtLoginModel.statusMessage)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if launchAtLoginModel.status == .requiresApproval {
+                Button("打开登录项设置") {
+                    launchAtLoginModel.openSystemSettings()
+                }
+                .buttonStyle(.link)
+            }
+
+            if let feedbackMessage = launchAtLoginModel.feedbackMessage {
+                Label(feedbackMessage, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(16)
+        .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var header: some View {
