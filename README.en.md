@@ -14,6 +14,52 @@ You can keep using the player you already know. CloudPlatter reads local Now Pla
 
 This screenshot comes directly from CloudPlatter's full-screen desktop layer; desktop icons, the Dock, and other application windows are not included.
 
+## Install and use
+
+### Requirements
+
+- macOS 14 or later, on either Apple silicon or Intel
+- The macOS client of NetEase Cloud Music
+- Runtime compatibility is currently verified on macOS 26.3 with NetEase Cloud Music 3.1.9; other versions may require additional validation
+
+### Download a public build
+
+Start with [GitHub Releases](https://github.com/Chengyunlai/cloud-platter/releases). When a release is available, download `CloudPlatter-*-universal.zip` and its matching `.sha256` file. You can verify the download in Terminal:
+
+```bash
+shasum -a 256 -c CloudPlatter-*.zip.sha256
+```
+
+Unzip the archive and drag `CloudPlatter.app` into Applications. Public builds use an ad-hoc signature and are not notarized by Apple. On first launch, Control-click the app in Finder and choose Open, or use Open Anyway under System Settings → Privacy & Security. Only do this for an archive downloaded from this repository and verified with its checksum; there is no need to disable Gatekeeper globally.
+
+If the Releases page does not have a build yet, package the current preview from source:
+
+```bash
+xcode-select --install             # Skip when Command Line Tools are already installed
+brew install cmake                 # Or install CMake by another method
+git clone --recurse-submodules https://github.com/Chengyunlai/cloud-platter.git
+cd cloud-platter
+make package VERSION=0.1.0-dev
+open dist/CloudPlatter.app
+```
+
+### Start using CloudPlatter
+
+1. Open NetEase Cloud Music and play a regular track.
+2. Launch CloudPlatter. It stays in the menu bar and automatically shows the walnut turntable scene on every display.
+3. The scene sits below desktop icons and regular application windows. Minimize your windows or use macOS Show Desktop to see the complete scene.
+4. Previous, Play/Pause, and Next controls appear to the right of the artist information. CloudPlatter confirms that NetEase Cloud Music is still the active media source before every command.
+5. Open the record icon or current track title in the menu bar to inspect the detected state, open Settings, or quit the app.
+
+CloudPlatter does not require Accessibility or Screen & System Audio Recording permission, and it does not require another NetEase Cloud Music login.
+
+### When no track appears
+
+- Confirm that NetEase Cloud Music is playing and that the same track appears in the macOS Control Center media card.
+- If another player was recently active, return to NetEase Cloud Music and start playback again so it becomes the current system media source.
+- Restart CloudPlatter and NetEase Cloud Music. The app degrades safely and never asks you to disable system security to read playback information.
+- If the issue remains, report the macOS and NetEase Cloud Music versions in [Issues](https://github.com/Chengyunlai/cloud-platter/issues). Do not upload account details, cookies, or a complete listening history.
+
 ## Status
 
 The project is currently in research and prototyping. Real-time title, artist, album, artwork, playback state, and track-change updates have been verified on macOS 26.3 with NetEase Cloud Music 3.1.9. Additional content types, app restarts, and system versions still require compatibility validation.
