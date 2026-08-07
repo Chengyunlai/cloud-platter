@@ -43,9 +43,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          release_flags=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+              release_flags+=(--prerelease)
+          fi
           gh release create "$GITHUB_REF_NAME" \
               dist/*.zip \
               dist/*.sha256 \
               --verify-tag \
               --title "CloudPlatter $GITHUB_REF_NAME" \
-              --notes-file Config/RELEASE_NOTES.md
+              --notes-file Config/RELEASE_NOTES.md \
+              "${release_flags[@]}"
