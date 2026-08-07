@@ -5,7 +5,7 @@ import Testing
 
 @Suite("MediaRemote 播放控制")
 struct MediaRemotePlaybackControllerTests {
-    @Test("三种用户命令映射到约定的 Adapter 编号")
+    @Test("用户命令映射到约定的 Adapter 编号")
     func commandsMapToAdapterIdentifiers() async {
         let executor = makeExecutor()
         let controller = MediaRemotePlaybackController(
@@ -15,16 +15,22 @@ struct MediaRemotePlaybackControllerTests {
         )
 
         let previousResult = await controller.send(.previousTrack)
+        let playResult = await controller.send(.play)
+        let pauseResult = await controller.send(.pause)
         let toggleResult = await controller.send(.togglePlayPause)
         let nextResult = await controller.send(.nextTrack)
 
         #expect(previousResult == .sent)
+        #expect(playResult == .sent)
+        #expect(pauseResult == .sent)
         #expect(toggleResult == .sent)
         #expect(nextResult == .sent)
         #expect(
             executor.runArguments.map(\.suffixCommandArguments)
                 == [
                     ["send", "5"],
+                    ["send", "0"],
+                    ["send", "1"],
                     ["send", "2"],
                     ["send", "4"],
                 ]

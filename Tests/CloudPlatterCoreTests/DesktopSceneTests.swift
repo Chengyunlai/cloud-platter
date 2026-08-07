@@ -338,6 +338,14 @@ struct DesktopSceneTests {
         )
     }
 
+    @MainActor
+    @Test("播放控制层在应用非活动时接受第一次鼠标点击")
+    func playbackControlHostingViewAcceptsFirstMouse() {
+        let hostingView = DesktopPlaybackControlsHostingView(rootView: EmptyView())
+
+        #expect(hostingView.acceptsFirstMouse(for: nil))
+    }
+
     @Test("窗口不可见、会话非活动或减少动态效果时停止刷新")
     func animationPolicyStopsUnnecessaryRefreshes() {
         let active = DesktopSceneAnimationPolicy(

@@ -163,6 +163,10 @@ extension PlaybackControlCommand {
         switch self {
         case .previousTrack:
             "5"
+        case .play:
+            "0"
+        case .pause:
+            "1"
         case .togglePlayPause:
             "2"
         case .nextTrack:

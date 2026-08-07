@@ -88,7 +88,7 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
         let controlPanel = DesktopPlaybackControlPanel(
             contentRect: playbackControlFrame(screenFrame: screenFrame)
         )
-        controlPanel.contentView = NSHostingView(
+        controlPanel.contentView = DesktopPlaybackControlsHostingView(
             rootView: DesktopPlaybackControlsView(playbackModel: playbackModel)
         )
         return DesktopScenePanelEntry(

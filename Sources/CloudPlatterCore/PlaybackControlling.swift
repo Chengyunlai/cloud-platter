@@ -14,6 +14,8 @@ public enum PlaybackControlTiming {
 /// 用户可以从 CloudPlatter 主动发送的有限播放命令。
 public enum PlaybackControlCommand: Equatable, Sendable {
     case previousTrack
+    case play
+    case pause
     case togglePlayPause
     case nextTrack
 }

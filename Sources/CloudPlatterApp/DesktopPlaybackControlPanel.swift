@@ -1,5 +1,13 @@
 import AppKit
 import CoreGraphics
+import SwiftUI
+
+/// 控制条位于不激活应用的桌面层，仍需让第一次鼠标按下直接交给 SwiftUI 按钮。
+final class DesktopPlaybackControlsHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        true
+    }
+}
 
 @MainActor
 final class DesktopPlaybackControlPanel: NSPanel {

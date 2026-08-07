@@ -46,6 +46,48 @@ struct PlaybackModelTests {
         #expect(commands.isEmpty)
     }
 
+    @Test("播放中点击播放按钮时发送显式暂停命令")
+    func playingMediaResolvesToggleToPause() async {
+        let controller = RecordingPlaybackController(result: .sent)
+        let model = PlaybackModel(
+            source: SingleStatePlaybackSource(
+                state: NowPlayingState(
+                    sourceBundleIdentifier: "com.netease.163music",
+                    title: "匿名歌曲",
+                    status: .playing
+                )
+            ),
+            controller: controller
+        )
+        await waitUntilControllable(model)
+
+        await model.performPlaybackControl(.togglePlayPause)
+
+        let commands = await controller.commands
+        #expect(commands == [.pause])
+    }
+
+    @Test("暂停中点击播放按钮时发送显式播放命令")
+    func pausedMediaResolvesToggleToPlay() async {
+        let controller = RecordingPlaybackController(result: .sent)
+        let model = PlaybackModel(
+            source: SingleStatePlaybackSource(
+                state: NowPlayingState(
+                    sourceBundleIdentifier: "com.netease.163music",
+                    title: "匿名歌曲",
+                    status: .paused
+                )
+            ),
+            controller: controller
+        )
+        await waitUntilControllable(model)
+
+        await model.performPlaybackControl(.togglePlayPause)
+
+        let commands = await controller.commands
+        #expect(commands == [.play])
+    }
+
     @Test("其他播放器处于活动状态时仍禁用网易云控制")
     func unsupportedActiveMediaDoesNotEnableControls() async {
         let controller = RecordingPlaybackController(result: .sent)

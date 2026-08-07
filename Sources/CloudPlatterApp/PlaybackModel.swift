@@ -46,11 +46,23 @@ final class PlaybackModel: ObservableObject {
         pendingPlaybackControl = command
         playbackControlFailure = nil
         targetRevalidationTask?.cancel()
-        let result = await sendWithinResponseDeadline(command)
+        let result = await sendWithinResponseDeadline(
+            resolvedCommand(for: command)
+        )
         pendingPlaybackControl = nil
         if case .failed(let failure) = result {
             playbackControlFailure = failure
         }
+    }
+
+    /// 网易云 3.1.9 对 MediaRemote 的 toggle 响应不稳定；根据刚观察到的状态发送幂等命令。
+    private func resolvedCommand(
+        for command: PlaybackControlCommand
+    ) -> PlaybackControlCommand {
+        guard command == .togglePlayPause else {
+            return command
+        }
+        return nowPlayingState.status == .playing ? .pause : .play
     }
 
     /// player-scoped 状态变化不能证明全局目标已恢复，必须重新执行只读复核后才能解锁。
