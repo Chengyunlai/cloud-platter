@@ -103,6 +103,8 @@ struct FallbackPollingPolicy: Sendable {
 }
 
 private actor FallbackPlaybackStateSelector {
+    private static let requiredIdleConfirmationsAfterActiveState = 2
+
     private let continuation: AsyncStream<NowPlayingState>.Continuation
     private let pollingPolicy: FallbackPollingPolicy
 
@@ -114,6 +116,7 @@ private actor FallbackPlaybackStateSelector {
     private var lastYieldedState: NowPlayingState?
     private var primaryFallbackState = NowPlayingState.idle
     private var lastPrimaryActivityAt = ContinuousClock.now
+    private var consecutiveFallbackIdleCount = 0
 
     init(
         continuation: AsyncStream<NowPlayingState>.Continuation,
@@ -133,6 +136,7 @@ private actor FallbackPlaybackStateSelector {
         switch state.status {
         case .playing, .paused:
             isFallbackNeeded = false
+            consecutiveFallbackIdleCount = 0
             cancelFallbackFetch()
             yieldIfChanged(state)
         case .idle, .unavailable:
@@ -207,12 +211,25 @@ private actor FallbackPlaybackStateSelector {
 
         switch state.status {
         case .playing, .paused:
+            consecutiveFallbackIdleCount = 0
             yieldIfChanged(state)
             return pollingPolicy.activeInterval
         case .idle:
+            if lastYieldedState?.status == .playing || lastYieldedState?.status == .paused {
+                consecutiveFallbackIdleCount += 1
+                guard
+                    consecutiveFallbackIdleCount
+                        >= Self.requiredIdleConfirmationsAfterActiveState
+                else {
+                    // 单次空快照常发生在播放器或 MediaRemote 路由切换期间，先快速复查再清空界面。
+                    return pollingPolicy.activeInterval
+                }
+            }
+            consecutiveFallbackIdleCount = 0
             yieldIfChanged(.idle)
             return pollingPolicy.idleInterval
         case .unavailable:
+            consecutiveFallbackIdleCount = 0
             yieldIfChanged(primaryFallbackState)
             return pollingPolicy.failureInterval
         }

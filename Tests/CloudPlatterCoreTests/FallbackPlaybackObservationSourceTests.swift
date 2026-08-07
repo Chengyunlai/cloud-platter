@@ -87,6 +87,39 @@ struct FallbackPlaybackObservationSourceTests {
         #expect(states.map(\.title) == ["第一首", "第二首"])
     }
 
+    @Test("备用播放期间单次空闲快照不会清空界面")
+    func transientFallbackIdleDoesNotReplaceActiveState() async {
+        let first = NowPlayingState(title: "第一首", status: .playing)
+        let recovered = NowPlayingState(title: "恢复歌曲", status: .playing)
+        let source = makeSource(
+            primaryStates: [.idle],
+            fallbackStates: [first, .idle, recovered]
+        )
+        var states: [NowPlayingState] = []
+
+        for await state in source.states().prefix(2) {
+            states.append(state)
+        }
+
+        #expect(states == [first, recovered])
+    }
+
+    @Test("备用播放期间连续空闲快照会确认停止")
+    func confirmedFallbackIdleReplacesActiveState() async {
+        let playing = NowPlayingState(title: "匿名歌曲", status: .playing)
+        let source = makeSource(
+            primaryStates: [.idle],
+            fallbackStates: [playing, .idle, .idle]
+        )
+        var states: [NowPlayingState] = []
+
+        for await state in source.states().prefix(2) {
+            states.append(state)
+        }
+
+        #expect(states == [playing, .idle])
+    }
+
     @Test("两条读取路径都没有媒体时输出空闲")
     func bothIdleSourcesProduceIdle() async {
         let source = makeSource(
