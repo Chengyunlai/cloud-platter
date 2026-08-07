@@ -227,7 +227,8 @@ struct DesktopSceneTests {
 
             #expect(engagedRadius > 0.65)
             #expect(engagedRadius < 0.82)
-            #expect(restingRadius > 1.0)
+            // 不能只让针尖越过唱片边缘，还需为完整唱头保留约三成半径的间隙。
+            #expect(restingRadius >= 1.3)
         }
     }
 

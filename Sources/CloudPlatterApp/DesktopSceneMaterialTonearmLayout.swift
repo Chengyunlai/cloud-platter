@@ -55,8 +55,8 @@ struct DesktopSceneMaterialTonearmLayout: Equatable {
     }
 
     func rotationDegrees(isEngaged: Bool) -> Double {
-        // 素材原始朝向已接近停靠位置，播放时向音槽内侧旋转。
-        isEngaged ? 24 : 0
+        // 停止时向台面外侧留出完整唱头宽度；播放时再向音槽内侧旋转。
+        isEngaged ? 24 : -8
     }
 
     func stylusPoint(isEngaged: Bool) -> CGPoint {
