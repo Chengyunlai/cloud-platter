@@ -230,6 +230,22 @@ struct DesktopSceneTests {
         }
     }
 
+    @Test("唱片完整位于素材的白色台面范围内")
+    func recordStaysInsideWhiteDeckSurface() {
+        for canvasSize in [
+            CGSize(width: 1_280, height: 720),
+            CGSize(width: 1_440, height: 900),
+            CGSize(width: 1_728, height: 720),
+        ] {
+            let sceneLayout = DesktopSceneLayout(canvasSize: canvasSize)
+            let layout = DesktopSceneTurntableLayout(size: sceneLayout.turntableFrame.size)
+            let recordBottom = layout.recordCenter.y + layout.recordDiameter / 2
+
+            // 底台素材的白色面板在机身高度约 86.5% 处结束，预留半个百分点避免压线。
+            #expect(recordBottom <= layout.size.height * 0.86)
+        }
+    }
+
     @Test("用户提供的唱机部件素材随 SwiftPM 目标分发")
     func turntableMaterialAssetsShipWithApplication() throws {
         for asset in DesktopSceneTurntableAsset.allCases {

@@ -5,7 +5,7 @@ struct DesktopSceneTurntableLayout: Equatable {
     let size: CGSize
 
     var recordDiameter: CGFloat {
-        min(size.width * 0.5, size.height * 0.76)
+        min(size.width * 0.48, size.height * 0.72)
     }
 
     var recordCenter: CGPoint {
@@ -23,7 +23,7 @@ struct DesktopSceneTurntableLayout: Equatable {
     }
 
     func stylusPoint(isEngaged: Bool) -> CGPoint {
-        let localPoint = DesktopSceneTonearmLayout(size: tonearmFrame.size)
+        let localPoint = DesktopSceneMaterialTonearmLayout(size: tonearmFrame.size)
             .stylusPoint(isEngaged: isEngaged)
         return CGPoint(
             x: tonearmFrame.minX + localPoint.x,

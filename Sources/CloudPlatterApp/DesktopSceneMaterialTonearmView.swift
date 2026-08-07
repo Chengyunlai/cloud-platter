@@ -8,7 +8,7 @@ struct DesktopSceneMaterialTonearmView: View {
 
     var body: some View {
         let frame = turntableLayout.tonearmFrame
-        let layout = DesktopSceneTonearmLayout(size: frame.size)
+        let layout = DesktopSceneMaterialTonearmLayout(size: frame.size)
         let pivotPoint = CGPoint(
             x: frame.minX + layout.pivotPoint.x,
             y: frame.minY + layout.pivotPoint.y
@@ -25,7 +25,7 @@ struct DesktopSceneMaterialTonearmView: View {
 
     @ViewBuilder
     private func pivotBase(
-        layout: DesktopSceneTonearmLayout,
+        layout: DesktopSceneMaterialTonearmLayout,
         frame: CGRect,
         pivotPoint: CGPoint
     ) -> some View {
@@ -47,7 +47,7 @@ struct DesktopSceneMaterialTonearmView: View {
 
     @ViewBuilder
     private func rotatingArm(
-        layout: DesktopSceneTonearmLayout,
+        layout: DesktopSceneMaterialTonearmLayout,
         pivotPoint: CGPoint
     ) -> some View {
         if let image = DesktopSceneTurntableAsset.tonearm.image {
