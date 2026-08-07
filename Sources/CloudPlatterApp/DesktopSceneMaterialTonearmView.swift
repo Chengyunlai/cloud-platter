@@ -4,6 +4,7 @@ import SwiftUI
 struct DesktopSceneMaterialTonearmView: View {
     let turntableLayout: DesktopSceneTurntableLayout
     let isEngaged: Bool
+    let shouldAnimate: Bool
     let reduceMotion: Bool
 
     var body: some View {
@@ -14,10 +15,26 @@ struct DesktopSceneMaterialTonearmView: View {
             y: frame.minY + layout.pivotPoint.y
         )
         let pivotBaseFrame = layout.pivotBaseFrame.offsetBy(dx: frame.minX, dy: frame.minY)
+        let motionPolicy = DesktopSceneTonearmMotionPolicy(
+            isEngaged: isEngaged,
+            shouldAnimate: shouldAnimate,
+            reduceMotion: reduceMotion
+        )
 
         ZStack(alignment: .topLeading) {
             pivotBase(layout: layout, frame: pivotBaseFrame, pivotPoint: pivotPoint)
-            rotatingArm(layout: layout, pivotPoint: pivotPoint)
+            TimelineView(
+                .animation(
+                    minimumInterval: 1.0 / 24.0,
+                    paused: !shouldAnimate
+                )
+            ) { context in
+                rotatingArm(
+                    layout: layout,
+                    pivotPoint: pivotPoint,
+                    wobbleDegrees: motionPolicy.wobbleDegrees(at: context.date)
+                )
+            }
         }
         .frame(width: turntableLayout.size.width, height: turntableLayout.size.height)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.45), value: isEngaged)
@@ -48,7 +65,8 @@ struct DesktopSceneMaterialTonearmView: View {
     @ViewBuilder
     private func rotatingArm(
         layout: DesktopSceneMaterialTonearmLayout,
-        pivotPoint: CGPoint
+        pivotPoint: CGPoint,
+        wobbleDegrees: Double
     ) -> some View {
         if let image = DesktopSceneTurntableAsset.tonearm.image {
             image
@@ -59,7 +77,12 @@ struct DesktopSceneMaterialTonearmView: View {
                     width: layout.rotatingAssemblyFrame.width,
                     height: layout.rotatingAssemblyFrame.height
                 )
-                .rotationEffect(.degrees(layout.rotationDegrees(isEngaged: isEngaged)))
+                .rotationEffect(
+                    .degrees(
+                        layout.rotationDegrees(isEngaged: isEngaged)
+                            + wobbleDegrees
+                    )
+                )
                 .position(pivotPoint)
                 .shadow(color: .black.opacity(0.28), radius: 1.5, x: 1, y: 2)
         }

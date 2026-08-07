@@ -232,6 +232,43 @@ struct DesktopSceneTests {
         }
     }
 
+    @Test("唱臂微摆保持克制且只在播放动画活动时出现")
+    func tonearmWobbleRemainsSubtleAndPlaybackScoped() {
+        let active = DesktopSceneTonearmMotionPolicy(
+            isEngaged: true,
+            shouldAnimate: true,
+            reduceMotion: false
+        )
+        let inactivePolicies = [
+            DesktopSceneTonearmMotionPolicy(
+                isEngaged: false,
+                shouldAnimate: true,
+                reduceMotion: false
+            ),
+            DesktopSceneTonearmMotionPolicy(
+                isEngaged: true,
+                shouldAnimate: false,
+                reduceMotion: false
+            ),
+            DesktopSceneTonearmMotionPolicy(
+                isEngaged: true,
+                shouldAnimate: true,
+                reduceMotion: true
+            ),
+        ]
+        let dates = (0..<180).map {
+            Date(timeIntervalSinceReferenceDate: Double($0) / 24)
+        }
+        let samples = dates.map(active.wobbleDegrees(at:))
+
+        #expect((samples.max() ?? 0) <= 0.24)
+        #expect((samples.min() ?? 0) >= -0.24)
+        #expect((samples.max() ?? 0) - (samples.min() ?? 0) > 0.3)
+        for policy in inactivePolicies {
+            #expect(dates.allSatisfy { policy.wobbleDegrees(at: $0) == 0 })
+        }
+    }
+
     @Test("唱片完整位于素材的白色台面范围内")
     func recordStaysInsideWhiteDeckSurface() {
         for canvasSize in [

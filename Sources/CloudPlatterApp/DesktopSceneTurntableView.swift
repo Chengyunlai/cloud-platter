@@ -32,6 +32,7 @@ struct DesktopSceneTurntableView: View {
                 DesktopSceneMaterialTonearmView(
                     turntableLayout: layout,
                     isEngaged: isRecordSpinning,
+                    shouldAnimate: shouldAnimate,
                     reduceMotion: reduceMotion
                 )
                 .frame(width: size.width, height: size.height)
