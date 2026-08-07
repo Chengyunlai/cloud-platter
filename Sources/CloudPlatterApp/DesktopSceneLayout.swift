@@ -67,9 +67,11 @@ struct DesktopSceneLayout: Equatable {
         )
     }
 
-    var playbackControlsFrame: CGRect {
-        let height = min(40, max(36, canvasSize.height * 0.044))
-        let width = height * 3.45
+    var playbackControlsVisualFrame: CGRect {
+        let height = DesktopPlaybackControlsMetrics.visualHeight(
+            canvasHeight: canvasSize.height
+        )
+        let width = DesktopPlaybackControlsMetrics.visualWidth(visualHeight: height)
         let gap = metadataControlGap
         let maximumSubtitleWidth = max(
             160,
@@ -87,8 +89,22 @@ struct DesktopSceneLayout: Equatable {
         )
     }
 
+    /// 独立控制 Panel 比可见胶囊稍大，使三个按钮都有至少 44pt 的命中区域。
+    var playbackControlsFrame: CGRect {
+        let visualFrame = playbackControlsVisualFrame
+        let panelSize = DesktopPlaybackControlsMetrics.panelSize(
+            visualSize: visualFrame.size
+        )
+        return CGRect(
+            x: visualFrame.midX - panelSize.width / 2,
+            y: visualFrame.midY - panelSize.height / 2,
+            width: panelSize.width,
+            height: panelSize.height
+        )
+    }
+
     var metadataSubtitleFrame: CGRect {
-        let controlsFrame = playbackControlsFrame
+        let controlsFrame = playbackControlsVisualFrame
         return CGRect(
             x: metadataFrame.minX,
             y: controlsFrame.minY,

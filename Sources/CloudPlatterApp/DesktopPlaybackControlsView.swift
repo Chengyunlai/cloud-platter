@@ -10,30 +10,46 @@ struct DesktopPlaybackControlsView: View {
     }
 
     var body: some View {
-        HStack(spacing: 6) {
-            controlButton(
-                command: .previousTrack,
-                symbolName: "backward.end.fill",
-                label: "上一首"
+        GeometryReader { proxy in
+            let visualHeight = min(
+                proxy.size.height - DesktopPlaybackControlsMetrics.verticalHitPadding * 2,
+                DesktopPlaybackControlsMetrics.maximumVisualHeight
             )
-            controlButton(
-                command: .togglePlayPause,
-                symbolName: playPauseSymbolName,
-                label: playPauseLabel,
-                isPrimary: true
+            let visualWidth = min(
+                proxy.size.width
+                    - DesktopPlaybackControlsMetrics.horizontalHitPadding * 2,
+                DesktopPlaybackControlsMetrics.visualWidth(visualHeight: visualHeight)
             )
-            controlButton(
-                command: .nextTrack,
-                symbolName: "forward.end.fill",
-                label: "下一首"
-            )
-        }
-        .padding(5)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.white.opacity(0.14), in: Capsule())
-        .overlay {
-            Capsule()
-                .stroke(controlBorderColor, lineWidth: 0.75)
+
+            ZStack {
+                Capsule()
+                    .fill(.white.opacity(0.14))
+                    .frame(width: visualWidth, height: visualHeight)
+                Capsule()
+                    .stroke(controlBorderColor, lineWidth: 0.75)
+                    .frame(width: visualWidth, height: visualHeight)
+
+                HStack(spacing: DesktopPlaybackControlsMetrics.buttonSpacing) {
+                    controlButton(
+                        command: .previousTrack,
+                        symbolName: "backward.end.fill",
+                        label: "上一首"
+                    )
+                    controlButton(
+                        command: .togglePlayPause,
+                        symbolName: playPauseSymbolName,
+                        label: playPauseLabel,
+                        isPrimary: true
+                    )
+                    controlButton(
+                        command: .nextTrack,
+                        symbolName: "forward.end.fill",
+                        label: "下一首"
+                    )
+                }
+                .padding(.horizontal, DesktopPlaybackControlsMetrics.horizontalHitPadding)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
         .opacity(playbackModel.canControlPlayback ? 1 : 0.5)
         .accessibilityElement(children: .contain)
@@ -63,8 +79,6 @@ struct DesktopPlaybackControlsView: View {
                         .font(.system(size: isPrimary ? 14 : 12, weight: .semibold))
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Circle())
         }
         .buttonStyle(DesktopPlaybackControlButtonStyle(isPrimary: isPrimary))
         .disabled(!isEnabled)
@@ -115,17 +129,25 @@ private struct DesktopPlaybackControlButtonStyle: ButtonStyle {
             reduceMotion: reduceMotion
         )
 
-        configuration.label
-            .foregroundStyle(.white.opacity(isEnabled ? 0.94 : 0.42))
-            .background(
-                .white.opacity(buttonOpacity(isPressed: configuration.isPressed)),
-                in: Circle()
-            )
-            .scaleEffect(animationPolicy.scale)
-            .animation(
-                animationPolicy.animationDuration.map(Animation.easeOut(duration:)),
-                value: configuration.isPressed
-            )
+        ZStack {
+            configuration.label
+                .foregroundStyle(.white.opacity(isEnabled ? 0.94 : 0.42))
+                .background {
+                    Circle()
+                        .fill(.white.opacity(buttonOpacity(isPressed: configuration.isPressed)))
+                        .frame(
+                            width: isPrimary ? 32 : 30,
+                            height: isPrimary ? 32 : 30
+                        )
+                }
+                .scaleEffect(animationPolicy.scale)
+                .animation(
+                    animationPolicy.animationDuration.map(Animation.easeOut(duration:)),
+                    value: configuration.isPressed
+                )
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
     }
 
     private func buttonOpacity(isPressed: Bool) -> Double {

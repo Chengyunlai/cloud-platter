@@ -36,9 +36,9 @@ struct DesktopSceneTurntableView: View {
                 )
                 .frame(width: size.width, height: size.height)
 
-                speedKnob(size: size)
+                speedKnob(layout: layout)
 
-                brandPlaque(size: size)
+                brandPlaque(layout: layout)
             }
         }
         .shadow(color: .black.opacity(0.44), radius: 10, y: 16)
@@ -73,43 +73,47 @@ struct DesktopSceneTurntableView: View {
     }
 
     @ViewBuilder
-    private func speedKnob(size: CGSize) -> some View {
+    private func speedKnob(layout: DesktopSceneTurntableLayout) -> some View {
+        let frame = layout.speedKnobFrame
+
         if let image = DesktopSceneTurntableAsset.knob.image {
             image
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
-                .frame(width: size.width * 0.085, height: size.width * 0.085)
-                .position(x: size.width * 0.89, y: size.height * 0.78)
+                .frame(width: frame.width, height: frame.height)
+                .position(x: frame.midX, y: frame.midY)
                 .shadow(color: .black.opacity(0.25), radius: 3, y: 3)
         } else {
             Circle()
                 .fill(Color(red: 0.46, green: 0.34, blue: 0.21))
-                .frame(width: size.width * 0.07, height: size.width * 0.07)
-                .position(x: size.width * 0.89, y: size.height * 0.78)
+                .frame(width: frame.width * 0.82, height: frame.height * 0.82)
+                .position(x: frame.midX, y: frame.midY)
         }
     }
 
     @ViewBuilder
-    private func brandPlaque(size: CGSize) -> some View {
+    private func brandPlaque(layout: DesktopSceneTurntableLayout) -> some View {
+        let frame = layout.brandPlaqueFrame
+
         if let image = DesktopSceneTurntableAsset.plaque.image {
             image
                 .resizable()
                 .interpolation(.high)
                 .scaledToFit()
-                .frame(width: size.width * 0.18, height: size.height * 0.065)
-                .position(x: size.width * 0.87, y: size.height * 0.9)
+                .frame(width: frame.width, height: frame.height)
+                .position(x: frame.midX, y: frame.midY)
                 .shadow(color: .black.opacity(0.22), radius: 2, y: 2)
         } else {
             Text("CLOUD PLATTER")
-                .font(.system(size: max(6, size.width * 0.011), weight: .semibold))
+                .font(.system(size: max(6, layout.size.width * 0.011), weight: .semibold))
                 .tracking(1.2)
                 .foregroundStyle(.white.opacity(0.72))
                 .padding(.horizontal, 7)
                 .padding(.vertical, 5)
                 .background(Color(red: 0.26, green: 0.25, blue: 0.23))
                 .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
-                .position(x: size.width * 0.87, y: size.height * 0.9)
+                .position(x: frame.midX, y: frame.midY)
         }
     }
 }

@@ -142,7 +142,8 @@ struct DesktopSceneTests {
         #expect(abs(layout.sleeveFrame.width - 446.4) < 0.01)
         #expect(abs(layout.sleeveFrame.minX - 100.8) < 0.01)
         #expect(abs(layout.metadataFrame.width - 1_180.8) < 0.01)
-        #expect(abs(layout.playbackControlsFrame.height - 39.6) < 0.01)
+        #expect(abs(layout.playbackControlsVisualFrame.height - 39.6) < 0.01)
+        #expect(abs(layout.playbackControlsFrame.height - 53.6) < 0.01)
         #expect(abs(layout.metadataSubtitleFrame.width - 300) < 0.01)
     }
 
@@ -185,10 +186,10 @@ struct DesktopSceneTests {
             subtitleText: "匿名艺人 · 匿名专辑"
         )
 
-        #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsFrame.minY)
+        #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsVisualFrame.minY)
         #expect(layout.metadataTitleFrame.maxY < layout.metadataSubtitleFrame.minY)
         #expect(layout.playbackControlsFrame.minY - layout.metadataFrame.minY < 150)
-        #expect(layout.playbackControlsFrame.maxY < layout.metadataFrame.maxY)
+        #expect(layout.playbackControlsVisualFrame.maxY < layout.metadataFrame.maxY)
     }
 
     @Test("两行标题在矮屏幕上不会侵入作者与控制行")
@@ -207,8 +208,8 @@ struct DesktopSceneTests {
                 layout.metadataTitleFrame.maxY + layout.metadataVerticalSpacing
                     <= layout.metadataSubtitleFrame.minY
             )
-            #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsFrame.minY)
-            #expect(layout.playbackControlsFrame.maxY <= layout.metadataFrame.maxY)
+            #expect(layout.metadataSubtitleFrame.minY == layout.playbackControlsVisualFrame.minY)
+            #expect(layout.playbackControlsVisualFrame.maxY <= layout.metadataFrame.maxY)
         }
     }
 
@@ -243,6 +244,45 @@ struct DesktopSceneTests {
 
             // 底台素材的白色面板在机身高度约 86.5% 处结束，预留半个百分点避免压线。
             #expect(recordBottom <= layout.size.height * 0.86)
+        }
+    }
+
+    @Test("唱臂基座、调速旋钮与铭牌完整位于白色台面安全区")
+    func turntableControlsStayInsideWhiteDeckSurface() {
+        for canvasSize in [
+            CGSize(width: 1_280, height: 720),
+            CGSize(width: 1_440, height: 900),
+            CGSize(width: 1_728, height: 720),
+        ] {
+            let sceneLayout = DesktopSceneLayout(canvasSize: canvasSize)
+            let layout = DesktopSceneTurntableLayout(size: sceneLayout.turntableFrame.size)
+
+            #expect(layout.whiteDeckSafeFrame.contains(layout.tonearmPivotBaseFrame))
+            #expect(layout.whiteDeckSafeFrame.contains(layout.speedKnobFrame))
+            #expect(layout.whiteDeckSafeFrame.contains(layout.brandPlaqueFrame))
+        }
+    }
+
+    @Test("播放控制视觉保持轻巧且三个按钮命中区域不低于四十四点")
+    func playbackControlHitTargetsRemainComfortable() {
+        for canvasSize in [
+            CGSize(width: 1_280, height: 720),
+            CGSize(width: 1_440, height: 900),
+            CGSize(width: 1_728, height: 720),
+        ] {
+            let layout = DesktopSceneLayout(canvasSize: canvasSize)
+            let panelFrame = layout.playbackControlsFrame
+            let availableButtonWidth =
+                panelFrame.width
+                - DesktopPlaybackControlsMetrics.horizontalHitPadding * 2
+                - DesktopPlaybackControlsMetrics.buttonSpacing * 2
+
+            #expect(layout.playbackControlsVisualFrame.height <= 40)
+            #expect(panelFrame.height >= DesktopPlaybackControlsMetrics.minimumHitSide)
+            #expect(
+                availableButtonWidth / 3
+                    >= DesktopPlaybackControlsMetrics.minimumHitSide
+            )
         }
     }
 
