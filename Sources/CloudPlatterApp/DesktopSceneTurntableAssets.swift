@@ -8,8 +8,6 @@ enum DesktopSceneTurntableAsset: String, CaseIterable {
     case plaque = "turntable-plaque"
     case tonearm = "turntable-tonearm"
     case pivot = "turntable-pivot"
-    case cartridge = "turntable-cartridge"
-    case headshell = "turntable-headshell"
 
     @MainActor
     var image: Image? {

@@ -30,11 +30,11 @@ struct DesktopSceneTurntableView: View {
                 .position(x: layout.recordCenter.x, y: layout.recordCenter.y)
 
                 DesktopSceneMaterialTonearmView(
+                    turntableLayout: layout,
                     isEngaged: isRecordSpinning,
                     reduceMotion: reduceMotion
                 )
-                .frame(width: layout.tonearmFrame.width, height: layout.tonearmFrame.height)
-                .position(x: layout.tonearmFrame.midX, y: layout.tonearmFrame.midY)
+                .frame(width: size.width, height: size.height)
 
                 speedKnob(size: size)
 

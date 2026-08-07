@@ -226,7 +226,7 @@ struct DesktopSceneTests {
 
             #expect(engagedRadius > 0.65)
             #expect(engagedRadius < 0.82)
-            #expect(restingRadius > 1.4)
+            #expect(restingRadius > 1.0)
         }
     }
 

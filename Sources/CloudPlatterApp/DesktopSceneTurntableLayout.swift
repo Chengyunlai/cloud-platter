@@ -5,7 +5,7 @@ struct DesktopSceneTurntableLayout: Equatable {
     let size: CGSize
 
     var recordDiameter: CGFloat {
-        min(size.width * 0.54, size.height * 0.82)
+        min(size.width * 0.5, size.height * 0.76)
     }
 
     var recordCenter: CGPoint {
