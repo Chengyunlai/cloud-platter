@@ -5,7 +5,7 @@ import Testing
 
 @Suite("播放状态备用通道")
 struct FallbackPlaybackObservationSourceTests {
-    @Test("正常暂停的静默只低频复核，不持续轮询")
+    @Test("正常暂停的静默只低频复核，不持续轮询", .timeLimit(.minutes(1)))
     func unchangedPausedPrimaryOnlyUsesInfrequentProbes() async throws {
         let primary = ManualPlaybackObservationSource()
         let paused = NowPlayingState(title: "匿名暂停歌曲", status: .paused)
@@ -22,17 +22,18 @@ struct FallbackPlaybackObservationSourceTests {
                 pausedSilenceTimeout: .milliseconds(100)
             )
         )
-        let task = Task { for await _ in source.states() {} }
-        defer {
-            task.cancel()
-            primary.finish()
-        }
+        var states = source.states().makeAsyncIterator()
+        var invocationTimes = fallback.invocationTimes.makeAsyncIterator()
+        defer { primary.finish() }
+        let sentAt = ContinuousClock.now
         primary.send(paused)
+        #expect(await states.next() == paused)
 
-        try await Task.sleep(for: .milliseconds(60))
-        #expect(fallback.invocationCount == 0)
-        try await Task.sleep(for: .milliseconds(100))
-        #expect(fallback.invocationCount == 1)
+        // 等实际查询发生，再检查最低间隔；不要求繁忙 runner 在固定上限内调度任务。
+        let firstInvocation = try #require(await invocationTimes.next())
+        let secondInvocation = try #require(await invocationTimes.next())
+        #expect(sentAt.duration(to: firstInvocation) >= .milliseconds(100))
+        #expect(firstInvocation.duration(to: secondInvocation) >= .milliseconds(100))
     }
 
     @Test("暂停备用查询退避，但主流恢复播放仍立即更新")
@@ -423,6 +424,8 @@ private final class SequenceSnapshotFetcher: NowPlayingSnapshotFetching,
     private let lock = NSLock()
     private let states: [NowPlayingState]
     private var index = 0
+    let invocationTimes: AsyncStream<ContinuousClock.Instant>
+    private let invocationContinuation: AsyncStream<ContinuousClock.Instant>.Continuation
 
     var invocationCount: Int {
         lock.withLock { index }
@@ -430,14 +433,20 @@ private final class SequenceSnapshotFetcher: NowPlayingSnapshotFetching,
 
     init(states: [NowPlayingState]) {
         self.states = states
+        (invocationTimes, invocationContinuation) = AsyncStream.makeStream(
+            of: ContinuousClock.Instant.self
+        )
     }
 
     func fetch() async -> NowPlayingState {
-        lock.withLock {
+        let invokedAt = ContinuousClock.now
+        let state = lock.withLock {
             let state = states[min(index, states.count - 1)]
             index += 1
             return state
         }
+        invocationContinuation.yield(invokedAt)
+        return state
     }
 }
 
