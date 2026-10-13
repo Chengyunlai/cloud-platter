@@ -209,7 +209,7 @@ struct PlaybackModelTests {
         #expect(!model.canControlPlayback)
     }
 
-    @Test("底层控制器停顿时在界面响应期限内解除等待状态")
+    @Test("底层控制器停顿时在界面响应期限内解除等待状态", .timeLimit(.minutes(1)))
     func stalledControllerReleasesPendingStateWithinDeadline() async {
         let controller = StalledPlaybackController()
         let model = PlaybackModel(
@@ -224,10 +224,13 @@ struct PlaybackModelTests {
         )
         await waitUntilControllable(model)
 
+        var starts = controller.starts.makeAsyncIterator()
         let operation = Task {
             await model.performPlaybackControl(.togglePlayPause)
         }
-        try? await Task.sleep(for: .milliseconds(1_200))
+        // 先确认命令任务已启动；界面期限应在控制器三秒返回前产生 unavailable。
+        await starts.next()
+        await operation.value
 
         #expect(model.pendingPlaybackControl == nil)
         #expect(model.playbackControlFailure == .unavailable)
@@ -300,11 +303,19 @@ private actor RecordingPlaybackController: PlaybackControlling {
 }
 
 private actor StalledPlaybackController: PlaybackControlling {
+    nonisolated let starts: AsyncStream<Void>
+    private let startContinuation: AsyncStream<Void>.Continuation
+
+    init() {
+        (starts, startContinuation) = AsyncStream.makeStream(of: Void.self)
+    }
+
     func validateCurrentTarget() async -> PlaybackTargetValidation {
         .supported
     }
 
     func send(_ command: PlaybackControlCommand) async -> PlaybackControlResult {
+        startContinuation.yield(())
         try? await Task.sleep(for: .seconds(3))
         return .sent
     }
