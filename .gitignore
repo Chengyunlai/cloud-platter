@@ -4,5 +4,6 @@ dist/
 DerivedData/
 *.xcuserstate
 xcuserdata/
+__pycache__/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcworkspace/xcuserdata/

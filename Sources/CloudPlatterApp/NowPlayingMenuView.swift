@@ -4,6 +4,7 @@ import SwiftUI
 
 struct NowPlayingMenuView: View {
     let nowPlayingState: NowPlayingState
+    @ObservedObject var desktopSceneSettings: DesktopSceneSettings
 
     private var presentation: NowPlayingPresentation {
         NowPlayingPresentation(state: nowPlayingState)
@@ -13,6 +14,21 @@ struct NowPlayingMenuView: View {
         VStack(spacing: 0) {
             playbackContent
                 .padding(18)
+
+            Divider()
+
+            Button {
+                desktopSceneSettings.toggleSceneVisibility()
+            } label: {
+                Label(
+                    desktopSceneSettings.isSceneVisible ? "隐藏桌面唱机" : "显示桌面唱机",
+                    systemImage: desktopSceneSettings.isSceneVisible ? "eye.slash" : "eye"
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
 
             Divider()
 

@@ -9,7 +9,8 @@ build:
 	swift build
 
 test:
-	swift test
+	./scripts/test.sh
+	python3 -m unittest discover -s Tests/DiagnosticsTests
 
 lint:
 	xcrun swift-format lint --strict --configuration .swift-format --recursive Sources Tests Package.swift

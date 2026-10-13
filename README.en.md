@@ -48,11 +48,13 @@ open dist/CloudPlatter.app
 ### Start using CloudPlatter
 
 1. Open NetEase Cloud Music and play a regular track.
-2. Launch CloudPlatter. It stays in the menu bar and automatically shows the walnut turntable scene on every display.
+2. Launch CloudPlatter. It stays in the menu bar and shows the walnut turntable scene on every display by default, then restores your saved display preferences.
 3. The scene sits below desktop icons and regular application windows. Minimize your windows or use macOS Show Desktop to see the complete scene.
 4. Previous, Play/Pause, and Next controls appear to the right of the artist information. CloudPlatter confirms that NetEase Cloud Music is still the active media source before every command.
-5. Open the record icon or current track title in the menu bar to inspect the detected state, open Settings, or quit the app.
+5. Open the record icon or current track title in the menu bar to inspect the detected state, hide or restore the desktop scene, open Settings, or quit the app.
 6. To restore the desktop automatically after restarting or signing in again, enable Launch at Login in Settings. If macOS requires approval, follow the in-app link to System Settings → General → Login Items.
+
+Choose the displays that show the scene in Settings. Visibility and display selections persist across restarts; hiding the scene does not pause music.
 
 CloudPlatter does not require Accessibility or Screen & System Audio Recording permission, and it does not require another NetEase Cloud Music login.
 
@@ -65,7 +67,7 @@ CloudPlatter does not require Accessibility or Screen & System Audio Recording p
 
 ## Status
 
-The project is currently in research and prototyping. Real-time title, artist, album, artwork, playback state, and track-change updates have been verified on macOS 26.3 with NetEase Cloud Music 3.1.9. Additional content types, app restarts, and system versions still require compatibility validation.
+The project is currently in research and prototyping. Real-time title, artist, album, artwork, playback state, and track-change updates have been verified on macOS 26.3 with NetEase Cloud Music 3.1.9. Anonymous client-restart checks have been recorded. Real sleep/wake, display hot-plugging, Spaces / Stage Manager, long-running energy use, and additional system versions still require validation. See the [October 2026 maintenance record (Chinese)](docs/maintenance/2026-10-preview.md).
 
 ## Planned MVP
 
@@ -73,7 +75,7 @@ The project is currently in research and prototyping. Real-time title, artist, a
 - Show the current title, artist, album, and artwork
 - Render a click-through, full-screen animated turntable desktop on every display
 - Control the current NetEase Cloud Music session with Previous, Play/Pause, and Next desktop buttons
-- Provide menu bar controls for visibility, launch at login, and reduced motion
+- Hide or restore the scene from the menu bar, select displays and launch at login in Settings, and respect the system Reduce Motion setting
 - Work locally without another NetEase Cloud Music login
 
 ## Technical direction
@@ -99,6 +101,7 @@ make package VERSION=0.1.0-dev
 ```
 
 - [Project roadmap (Chinese)](docs/ROADMAP.md)
+- [Stable-release checklist and next iterations (Chinese)](docs/maintenance/stable-release-checklist.md)
 - [Domain context (Chinese)](CONTEXT.md)
 - [Architecture decisions (Chinese)](docs/adr/README.md)
 - [Playback-source research (Chinese)](docs/research/now-playing-data-source-2026-08.md)

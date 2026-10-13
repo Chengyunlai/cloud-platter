@@ -12,7 +12,10 @@
 ## 开发环境
 
 - macOS 14 或更新版本。
-- 完整 Xcode 及其包含的 Swift 工具链；只有 Command Line Tools 时可以构建应用，但可能缺少 Swift Testing 运行库。
+- Swift 6 工具链，推荐完整 Xcode。`make test` 会检测所选开发目录中附带的 Swift Testing 框架，
+  为需要额外搜索路径的 Command Line Tools 自动补齐参数。若该工具链确实没有 Testing，
+  请安装包含 Swift Testing 的 Xcode / Command Line Tools；不要跳过测试或更换测试框架。
+- Python 3，用于匿名资源诊断脚本及其回归测试；诊断采样仅手动执行，不随 App 运行。
 - CMake，用于从固定提交构建随 App 分发的 Universal MediaRemote Adapter。
 - 克隆仓库时使用 `git clone --recurse-submodules`；已有工作区运行
   `git submodule update --init --recursive` 补齐第三方源码。

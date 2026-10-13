@@ -5,17 +5,27 @@ import SwiftUI
 @MainActor
 final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate {
     private let playbackModel: PlaybackModel
+    private let settings: DesktopSceneSettings
     private var panels: [CGDirectDisplayID: DesktopScenePanelEntry] = [:]
     private var isShowing = false
     private var isSessionActive = true
     private var nowPlayingStateObservation: AnyCancellable?
+    private var settingsObservation: AnyCancellable?
 
-    init(playbackModel: PlaybackModel) {
+    init(playbackModel: PlaybackModel, settings: DesktopSceneSettings) {
         self.playbackModel = playbackModel
+        self.settings = settings
         super.init()
 
         observeSessionActivity()
         observeNowPlayingState()
+        settingsObservation = settings.$isSceneVisible
+            .combineLatest(settings.$disabledDisplayIdentifiers)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.synchronizePanels()
+                }
+            }
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenParametersDidChange),
@@ -45,6 +55,13 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
             return (number.uint32Value, screen)
         }
         let activeScreenIdentifiers = Set(screens.map { identifier, _ in identifier })
+        settings.updateAvailableDisplays(
+            screens.map { identifier, screen in
+                DesktopSceneDisplay(
+                    id: persistentIdentifier(for: identifier), name: screen.localizedName
+                )
+            }
+        )
 
         for identifier in Array(panels.keys) where !activeScreenIdentifiers.contains(identifier) {
             guard let entry = panels.removeValue(forKey: identifier) else {
@@ -62,16 +79,26 @@ final class DesktopSceneController: NSObject, ObservableObject, NSWindowDelegate
                 display: entry.controlPanel.isVisible
             )
             panels[identifier] = entry
-            if isShowing {
+            if isShowing, settings.shouldShowScene(on: persistentIdentifier(for: identifier)) {
                 if !entry.scenePanel.isVisible {
                     entry.scenePanel.orderFrontRegardless()
                 }
                 if !entry.controlPanel.isVisible {
                     entry.controlPanel.orderFrontRegardless()
                 }
+            } else {
+                entry.scenePanel.orderOut(nil)
+                entry.controlPanel.orderOut(nil)
             }
         }
         updateWindowVisibility()
+    }
+
+    private func persistentIdentifier(for identifier: CGDirectDisplayID) -> String {
+        guard let uuid = CGDisplayCreateUUIDFromDisplayID(identifier)?.takeRetainedValue() else {
+            return "display-\(identifier)"
+        }
+        return CFUUIDCreateString(nil, uuid) as String
     }
 
     private func makePanelEntry(screenFrame: NSRect) -> DesktopScenePanelEntry {

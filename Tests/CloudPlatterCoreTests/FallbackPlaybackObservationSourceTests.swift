@@ -5,6 +5,87 @@ import Testing
 
 @Suite("播放状态备用通道")
 struct FallbackPlaybackObservationSourceTests {
+    @Test("正常暂停的静默只低频复核，不持续轮询")
+    func unchangedPausedPrimaryOnlyUsesInfrequentProbes() async throws {
+        let primary = ManualPlaybackObservationSource()
+        let paused = NowPlayingState(title: "匿名暂停歌曲", status: .paused)
+        let fallback = SequenceSnapshotFetcher(states: [paused])
+        let source = makeSource(
+            primary: primary,
+            fallback: fallback,
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .milliseconds(1),
+                idleInterval: .milliseconds(1),
+                failureInterval: .milliseconds(1),
+                primarySilenceTimeout: .milliseconds(10),
+                pausedInterval: .milliseconds(20),
+                pausedSilenceTimeout: .milliseconds(100)
+            )
+        )
+        let task = Task { for await _ in source.states() {} }
+        defer {
+            task.cancel()
+            primary.finish()
+        }
+        primary.send(paused)
+
+        try await Task.sleep(for: .milliseconds(60))
+        #expect(fallback.invocationCount == 0)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(fallback.invocationCount == 1)
+    }
+
+    @Test("暂停备用查询退避，但主流恢复播放仍立即更新")
+    func primaryResumeInterruptsPausedFallback() async {
+        let primary = ManualPlaybackObservationSource()
+        let paused = NowPlayingState(title: "匿名歌曲", status: .paused)
+        let playing = NowPlayingState(title: "匿名歌曲", status: .playing)
+        let fallback = SequenceSnapshotFetcher(states: [paused])
+        let source = makeSource(
+            primary: primary,
+            fallback: fallback,
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .milliseconds(1),
+                idleInterval: .milliseconds(1),
+                failureInterval: .milliseconds(1),
+                primarySilenceTimeout: .seconds(1),
+                pausedInterval: .seconds(5)
+            )
+        )
+        let stream = source.states()
+        var iterator = stream.makeAsyncIterator()
+        primary.send(.idle)
+        #expect(await iterator.next() == paused)
+        let clock = ContinuousClock()
+        let startedAt = clock.now
+        primary.send(playing)
+        #expect(await iterator.next() == playing)
+        #expect(startedAt.duration(to: clock.now) < .seconds(1))
+        primary.finish()
+    }
+
+    @Test("已失效的主流在暂停期间使用较慢备用轮询")
+    func failedPrimaryUsesPausedInterval() async throws {
+        let paused = NowPlayingState(title: "匿名歌曲", status: .paused)
+        let fallback = SequenceSnapshotFetcher(states: [paused])
+        let source = makeSource(
+            primary: ImmediatePlaybackObservationSource(states: []),
+            fallback: fallback,
+            pollingPolicy: FallbackPollingPolicy(
+                activeInterval: .milliseconds(1),
+                idleInterval: .milliseconds(1),
+                failureInterval: .milliseconds(1),
+                primarySilenceTimeout: .seconds(1),
+                pausedInterval: .milliseconds(150)
+            )
+        )
+        let stream = source.states()
+        var iterator = stream.makeAsyncIterator()
+        #expect(await iterator.next() == paused)
+        try await Task.sleep(for: .milliseconds(60))
+        #expect(fallback.invocationCount == 1)
+    }
+
     @Test("主事件流空闲时使用 JXA 歌曲且不闪空状态")
     func fallbackReplacesEmptyPrimaryState() async {
         let fallbackState = NowPlayingState(
