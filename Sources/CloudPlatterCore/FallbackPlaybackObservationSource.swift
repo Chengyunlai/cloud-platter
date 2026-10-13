@@ -93,12 +93,32 @@ struct FallbackPollingPolicy: Sendable {
     let idleInterval: Duration
     let failureInterval: Duration
     let primarySilenceTimeout: Duration
+    let pausedInterval: Duration
+    let pausedSilenceTimeout: Duration
+
+    init(
+        activeInterval: Duration,
+        idleInterval: Duration,
+        failureInterval: Duration,
+        primarySilenceTimeout: Duration,
+        pausedInterval: Duration? = nil,
+        pausedSilenceTimeout: Duration? = nil
+    ) {
+        self.activeInterval = activeInterval
+        self.idleInterval = idleInterval
+        self.failureInterval = failureInterval
+        self.primarySilenceTimeout = primarySilenceTimeout
+        self.pausedInterval = pausedInterval ?? idleInterval
+        self.pausedSilenceTimeout = pausedSilenceTimeout ?? primarySilenceTimeout
+    }
 
     static let standard = FallbackPollingPolicy(
         activeInterval: .seconds(1),
         idleInterval: .seconds(2),
         failureInterval: .seconds(4),
-        primarySilenceTimeout: .seconds(4)
+        primarySilenceTimeout: .seconds(4),
+        pausedInterval: .seconds(5),
+        pausedSilenceTimeout: .seconds(15)
     )
 }
 
@@ -112,10 +132,11 @@ private actor FallbackPlaybackStateSelector {
     private var fallbackFetchTask: Task<NowPlayingState, Never>?
     private var fallbackFetchGeneration = 0
     private var isFallbackNeeded = false
+    private var isCheckingSilentPrimary = false
     private var isStopped = false
     private var lastYieldedState: NowPlayingState?
     private var primaryFallbackState = NowPlayingState.idle
-    private var lastPrimaryActivityAt = ContinuousClock.now
+    private var lastPrimaryVerificationAt = ContinuousClock.now
     private var consecutiveFallbackIdleCount = 0
 
     init(
@@ -131,7 +152,8 @@ private actor FallbackPlaybackStateSelector {
             return
         }
 
-        lastPrimaryActivityAt = ContinuousClock.now
+        lastPrimaryVerificationAt = ContinuousClock.now
+        isCheckingSilentPrimary = false
         primaryFallbackState = state
         switch state.status {
         case .playing, .paused:
@@ -149,12 +171,16 @@ private actor FallbackPlaybackStateSelector {
         guard !isStopped, !isFallbackNeeded else {
             return
         }
-        let silenceDuration = lastPrimaryActivityAt.duration(to: ContinuousClock.now)
-        guard silenceDuration >= pollingPolicy.primarySilenceTimeout else {
+        let silenceDuration = lastPrimaryVerificationAt.duration(to: ContinuousClock.now)
+        let timeout =
+            primaryFallbackState.status == .paused
+            ? pollingPolicy.pausedSilenceTimeout : pollingPolicy.primarySilenceTimeout
+        guard silenceDuration >= timeout else {
             return
         }
 
-        primaryFallbackState = NowPlayingState(status: .unavailable)
+        // 事件流没有心跳；静默只触发一次复核，不能直接证明连接故障。
+        isCheckingSilentPrimary = true
         isFallbackNeeded = true
         resumeFallbackWaiters(with: true)
     }
@@ -164,6 +190,7 @@ private actor FallbackPlaybackStateSelector {
             return
         }
         primaryFallbackState = NowPlayingState(status: .unavailable)
+        isCheckingSilentPrimary = false
         isFallbackNeeded = true
         resumeFallbackWaiters(with: true)
     }
@@ -213,7 +240,16 @@ private actor FallbackPlaybackStateSelector {
         case .playing, .paused:
             consecutiveFallbackIdleCount = 0
             yieldIfChanged(state)
-            return pollingPolicy.activeInterval
+            if isCheckingSilentPrimary, state.status == .paused,
+                state == primaryFallbackState
+            {
+                // 暂停期间的快照仍与主流一致时，回到低频复核，避免长期每秒创建查询进程。
+                isFallbackNeeded = false
+                isCheckingSilentPrimary = false
+                lastPrimaryVerificationAt = ContinuousClock.now
+            }
+            return state.status == .paused
+                ? pollingPolicy.pausedInterval : pollingPolicy.activeInterval
         case .idle:
             if lastYieldedState?.status == .playing || lastYieldedState?.status == .paused {
                 consecutiveFallbackIdleCount += 1
@@ -230,7 +266,10 @@ private actor FallbackPlaybackStateSelector {
             return pollingPolicy.idleInterval
         case .unavailable:
             consecutiveFallbackIdleCount = 0
-            yieldIfChanged(primaryFallbackState)
+            yieldIfChanged(
+                isCheckingSilentPrimary
+                    ? NowPlayingState(status: .unavailable) : primaryFallbackState
+            )
             return pollingPolicy.failureInterval
         }
     }

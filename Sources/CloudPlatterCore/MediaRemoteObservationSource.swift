@@ -70,7 +70,8 @@ public struct MediaRemoteObservationSource: Sendable {
             return .unavailable(.capabilityTestFailed(exitCode: exitCode))
         case .failure(.timedOut):
             return .unavailable(.capabilityTestTimedOut)
-        case .failure(.launchFailed), .failure(.terminated), .failure(.invalidOutput):
+        case .failure(.launchFailed), .failure(.terminated), .failure(.invalidOutput),
+            .failure(.cancelled):
             return .unavailable(.launchFailed)
         }
     }

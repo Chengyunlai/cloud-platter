@@ -13,3 +13,5 @@
 - [ADR-0003：使用系统媒体卡片作为 MVP 播放状态源（已替代）](0003-control-center-observation-source.md)
 - [ADR-0004：使用隔离的 MediaRemote Adapter 作为播放状态源](0004-isolated-mediaremote-adapter.md)
 - [ADR-0005：通过独立桌面控制层发送用户主动播放命令](0005-user-initiated-desktop-playback-controls.md)
+
+- [ADR-0006：保存桌面显示偏好并降低暂停复核频率](0006-desktop-preferences-and-paused-probes.md)

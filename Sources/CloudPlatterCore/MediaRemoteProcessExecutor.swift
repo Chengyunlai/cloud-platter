@@ -3,6 +3,7 @@ import Foundation
 enum MediaRemoteProcessError: Error, Equatable, Sendable {
     case launchFailed
     case timedOut
+    case cancelled
     case terminated(exitCode: Int32)
     case invalidOutput
 }
@@ -39,32 +40,11 @@ final class FoundationMediaRemoteProcessExecutor: MediaRemoteProcessExecuting,
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
 
-        let processBox = RunningProcessBox(process: process)
-
-        return await withCheckedContinuation { continuation in
-            let completion = ProcessCompletion(continuation: continuation)
-            process.terminationHandler = { terminatedProcess in
-                completion.finish(.success(terminatedProcess.terminationStatus))
-            }
-
-            do {
-                try process.run()
-            } catch {
-                completion.finish(.failure(.launchFailed))
-                return
-            }
-
-            Task {
-                do {
-                    try await Task.sleep(for: timeout)
-                } catch {
-                    return
-                }
-
-                if completion.finish(.failure(.timedOut)) {
-                    processBox.terminate()
-                }
-            }
+        let operation = OneShotProcessOperation(process: process)
+        return await withTaskCancellationHandler {
+            await operation.run(timeout: timeout)
+        } onCancel: {
+            operation.finish(.failure(.cancelled), terminateProcess: true)
         }
     }
 
@@ -153,26 +133,77 @@ private final class RunningProcessBox: @unchecked Sendable {
     }
 }
 
-private final class ProcessCompletion: @unchecked Sendable {
+/// 启动、取消、超时和退出共用同一把锁，避免取消先到时仍启动进程或重复恢复调用方。
+private final class OneShotProcessOperation: @unchecked Sendable {
     private let lock = NSLock()
+    private let process: Process
     private var continuation: CheckedContinuation<Result<Int32, MediaRemoteProcessError>, Never>?
+    private var result: Result<Int32, MediaRemoteProcessError>?
+    private var timeoutTask: Task<Void, Never>?
 
-    init(continuation: CheckedContinuation<Result<Int32, MediaRemoteProcessError>, Never>) {
-        self.continuation = continuation
+    init(process: Process) {
+        self.process = process
     }
 
-    @discardableResult
-    func finish(_ result: Result<Int32, MediaRemoteProcessError>) -> Bool {
-        lock.lock()
-        guard let continuation else {
-            lock.unlock()
-            return false
+    func run(timeout: Duration) async -> Result<Int32, MediaRemoteProcessError> {
+        await withCheckedContinuation { continuation in
+            start(continuation: continuation, timeout: timeout)
         }
+    }
+
+    private func start(
+        continuation: CheckedContinuation<Result<Int32, MediaRemoteProcessError>, Never>,
+        timeout: Duration
+    ) {
+        lock.lock()
+        if let result {
+            lock.unlock()
+            continuation.resume(returning: result)
+            return
+        }
+        self.continuation = continuation
+        process.terminationHandler = { [weak self] process in
+            self?.finish(.success(process.terminationStatus))
+        }
+        do {
+            try process.run()
+        } catch {
+            lock.unlock()
+            finish(.failure(.launchFailed))
+            return
+        }
+        timeoutTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: timeout)
+            } catch {
+                return
+            }
+            self?.finish(.failure(.timedOut), terminateProcess: true)
+        }
+        lock.unlock()
+    }
+
+    func finish(
+        _ result: Result<Int32, MediaRemoteProcessError>,
+        terminateProcess: Bool = false
+    ) {
+        lock.lock()
+        guard self.result == nil else {
+            lock.unlock()
+            return
+        }
+        self.result = result
+        let continuation = self.continuation
         self.continuation = nil
+        let timeoutTask = self.timeoutTask
+        self.timeoutTask = nil
+        if terminateProcess, process.isRunning {
+            process.terminate()
+        }
         lock.unlock()
 
-        continuation.resume(returning: result)
-        return true
+        timeoutTask?.cancel()
+        continuation?.resume(returning: result)
     }
 }
 

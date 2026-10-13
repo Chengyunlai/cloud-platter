@@ -6,21 +6,25 @@ struct SettingsView: View {
 
     let nowPlayingState: NowPlayingState
     @ObservedObject var launchAtLoginModel: LaunchAtLoginModel
+    @ObservedObject var desktopSceneSettings: DesktopSceneSettings
 
     private var presentation: NowPlayingPresentation {
         NowPlayingPresentation(state: nowPlayingState)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            header
-            playbackCard
-            launchAtLoginCard
-            desktopSceneNote
-            privacyNote
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                header
+                playbackCard
+                desktopSceneCard
+                launchAtLoginCard
+                desktopSceneNote
+                privacyNote
+            }
+            .padding(26)
         }
-        .padding(26)
-        .frame(width: 520, height: 500, alignment: .topLeading)
+        .frame(width: 520, height: 640, alignment: .topLeading)
         .onAppear {
             launchAtLoginModel.refresh()
         }
@@ -28,6 +32,48 @@ struct SettingsView: View {
             guard newPhase == .active else { return }
             launchAtLoginModel.refresh()
         }
+    }
+
+    private var desktopSceneCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(
+                "显示桌面唱机",
+                isOn: Binding(
+                    get: { desktopSceneSettings.isSceneVisible },
+                    set: { desktopSceneSettings.setSceneVisible($0) }
+                )
+            )
+
+            Text("显示器")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            ForEach(desktopSceneSettings.availableDisplays) { display in
+                Toggle(
+                    display.name,
+                    isOn: Binding(
+                        get: { desktopSceneSettings.isDisplayEnabled(display.id) },
+                        set: { desktopSceneSettings.setDisplayEnabled($0, identifier: display.id) }
+                    )
+                )
+            }
+
+            Text("显示开关与屏幕选择会在重启后保留。隐藏时暂停场景动画，音乐继续播放。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if !desktopSceneSettings.availableDisplays.isEmpty,
+                !desktopSceneSettings.availableDisplays.contains(where: {
+                    desktopSceneSettings.isDisplayEnabled($0.id)
+                })
+            {
+                Text("未选中任何显示器；选择一个屏幕后即可显示唱机。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private var launchAtLoginCard: some View {
@@ -108,7 +154,7 @@ struct SettingsView: View {
 
     private var desktopSceneNote: some View {
         Label(
-            "全屏场景会铺满每块显示器，并保持点击穿透；桌面图标和其他应用仍可正常使用。",
+            "全屏场景会铺满选中的显示器，并保持点击穿透；桌面图标和其他应用仍可正常使用。",
             systemImage: "display.2"
         )
         .font(.caption)
